@@ -1,0 +1,124 @@
+<!--
+Copyright 2017 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="./tricium-client.html">
+<dom-module id="tricium-view">
+  <template>
+    <style>
+      :host {
+        border: 1px solid #ddd;
+        display: block;
+        margin: 1em var(--default-hozizontal-margin, 1rem);
+      }
+      .header {
+        background-color: #f6f6f6;
+        border-bottom: 1px solid #ebebeb;
+        display: flex;
+        justify-content: space-between;
+        padding: .5em var(--default-hozizontal-margin, .5rem);
+      }
+      .header .timestamp {
+        color: #777;
+      }
+      .analyzers {
+        display: flex;
+        flex-wrap: wrap;
+        padding: .5em 0 0 .5em;
+      }
+      .analyzer {
+        display: flex;
+        font-size: .9em;
+        margin-right: 1px;
+        max-width: 1.35em;
+        overflow: hidden;
+        padding: .45em 0em .45em 1.35em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .analyzer.scheduled {
+        background-color: #e0e0e0;
+      }
+      .analyzer.started {
+        background-color: #ffeb3b;
+      }
+      .analyzer.success {
+        background-color: #8bc34a;
+      }
+      .analyzer.failure {
+        background-color: #f44336;
+        color: #fff;
+      }
+      .analyzer.infraFailure,
+      .analyzer.canceled {
+        background-color: #ba68c8;
+      }
+      .analyzer:last-of-type {
+        margin-right: 0;
+        max-width: none;
+        padding: .45em 1.35em;
+      }
+      .analyzerRun {
+        text-decoration: none;
+        color: #000;
+      }
+      .analyzerRun.failure {
+        color: #fff;
+      }
+      .analyzerRun:hover {
+        text-decoration: underline;
+      }
+      .analyzerRun::before {
+        background-position: center;
+        background-repeat: no-repeat;
+        content: ' ';
+        display: block;
+        height: 1em;
+        width: 1em;
+        position: absolute;
+        margin-top: .25em;
+        margin-left: -1.2em;
+      }
+      .analyzerRun.started::before,
+      .analyzerRun.scheduled::before {
+        background-image: url('images/started.svg');
+      }
+      .analyzerRun.success::before {
+        background-image: url('images/success.svg');
+      }
+      .analyzerRun.failure::before {
+        background-image: url('images/failure.svg');
+      }
+      .analyzerRun.infraFailure::before {
+        background-image: url('images/infraFailure.svg');
+      }
+      .analyzerRun.canceled::before {
+        background-image: url('images/canceled.svg');
+      }
+    </style>
+    <div hidden$="[[loading_]]">
+      <div class="header">
+        <div class="title">
+          <span>[[computeTitleText_(analyzerResults_)]]</span>
+        </div>
+        <div class="timestamp">Last updated at [[lastUpdate_]]</div>
+      </div>
+      <section class="analyzers">
+        <template is="dom-repeat" items="[[_analyzerResults]]" as="analyzer">
+          <div class$="analyzer [[_getAnalyzerRunClass(analyzer)]]">
+             <a class$="analyzerRun [[_getAnalyzerRunClass(analyzer)]]"
+                aria-label$="[[analyzer.name]] [[_getAnalyzerRunClass(analyzer)]]"
+                href$="[[analyzer.url]]" target="_blank">
+                [[analyzer.name]]</a>
+          </div>
+        </template>
+      </section>
+    </div>
+    <tricium-client id="client"
+        base-url=[[baseUrl]]
+        on-auth-change="handleAuthChange_"></tricium-client>
+  </template>
+  <script src="tricium-view.js"></script>
+</dom-module>
