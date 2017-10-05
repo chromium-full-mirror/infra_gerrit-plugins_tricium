@@ -48,3 +48,18 @@ plugin tricium". Each time you update Tricium, you must rebuild and copy
 the jar file into the test site plugin directory and restart Gerrit. You
 may need to hard-reload the page in your browser so cached resources
 aren't used.
+
+### Running web-component-tester
+
+First, set up dependencies:
+
+```
+npm install -g bower
+npm install -g web-component-tester
+cd test/
+bower install
+```
+
+The npm install commands may need to be run as root/administrator.
+Then, you can either run all the tests from the tricium directory with the
+`wct` command. See `wct --help` for more options related to running the tests.

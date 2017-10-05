@@ -1,0 +1,13 @@
+{
+  "name": "cr-tricium-tests",
+  "dependencies": {
+    "polymer": "Polymer/polymer#*"
+  },
+  "devDependencies": {
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#*",
+    "test-fixture": "PolymerElements/test-fixture#*",
+    "web-component-tester": "*",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#*"
+  },
+  "ignore": []
+}
