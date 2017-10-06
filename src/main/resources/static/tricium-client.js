@@ -33,10 +33,10 @@
           OAUTH_EMAIL: null,
           OAUTH_TOKEN: null,
         },
-      }
+      },
     },
 
-    getOAuthToken: function() {
+    getOAuthToken() {
       if (this.oauthTokenIsValid_(this.sharedAuthState_[OAUTH_TOKEN])) {
         return Promise.resolve();
       }
@@ -51,10 +51,10 @@
       });
     },
 
-    getConfig: function(projectName, pluginName) {
-      let configURL = '/projects/' + encodeURIComponent(projectName) + '/' +
+    getConfig(projectName, pluginName) {
+      const configURL = '/projects/' + encodeURIComponent(projectName) + '/' +
           encodeURIComponent(pluginName) + '~config';
-      let opts = {credentials: 'same-origin'};
+      const opts = {credentials: 'same-origin'};
       return fetch(configURL, opts).then((response) => {
         if (!response.ok) {
           console.error(response.statusText);
@@ -64,7 +64,7 @@
       });
     },
 
-    getProgress: function(change, revision) {
+    getProgress(change, revision) {
       /* TODO(emso): Include when there is a non-RPC endpoint to call.
       let url = this.baseUrl + '/progress' +
                     '?change=' + change +
@@ -88,29 +88,33 @@
         return response.json();
       });
       */
-      return new Promise(() => { 
-	      return {"analyzer_progress": [ { "analyzer": "Hello"}]};
+      return new Promise(() => {
+        return {
+            analyzer_progress: [{analyzer: 'Hello'}],
+        };
       });
     },
 
-    isSignedIn_: function() {
+    isSignedIn_() {
       // TODO(emso): Use Gerrit.isSignedIn() once it's available.
       return document.cookie.indexOf('XSRF_TOKEN=') !== -1;
     },
 
-    getSharedAccessToken_: function() {
-      let token = this.sharedAuthState_[OAUTH_TOKEN];
-      if (!token) { return null; }
+    getSharedAccessToken_() {
+      const token = this.sharedAuthState_[OAUTH_TOKEN];
+      if (!token) {
+          return null;
+      }
       return token['access_token'];
     },
 
-    configureOAuthLibrary_: function() {
+    configureOAuthLibrary_() {
       if (!this.isSignedIn_() || this.sharedAuthState_[OAUTH_CONFIGURED]) {
         return Promise.resolve();
       }
       return new Promise((resolve) => {
-        // gapi.config is available in 'config_min', not 'config'. More details about gapi: 
-	// https://developers.google.com/api-client-library/javascript/reference/referencedocs
+        // gapi.config is available in 'config_min', not 'config'. More details about gapi:
+        // https://developers.google.com/api-client-library/javascript/reference/referencedocs
         gapi.load('config_min', resolve);
       }).then(() => {
         return this._getOAuthConfig();
@@ -135,10 +139,10 @@
       });
     },
 
-    getOAuthConfig_: function() {
-      let authConfigURL = '/accounts/self/oauthconfig';
-      let opts = {
-        headers: new Headers({'Accept': 'application/json'}),
+    getOAuthConfig_() {
+      const authConfigURL = '/accounts/self/oauthconfig';
+      const opts = {
+        headers: new Headers({Accept: 'application/json'}),
         credentials: 'same-origin',
       };
       return fetch(authConfigURL, opts).then((response) => {
@@ -155,7 +159,7 @@
       });
     },
 
-    oauthTokenIsValid_: function(token) {
+    oauthTokenIsValid_(token) {
       if (!token) { return false; }
       if (!token['access_token'] || !token['expires_at']) { return false; }
       const expiration = new Date(parseInt(token['expires_at'], 10) * 1000);
@@ -163,7 +167,7 @@
       return true;
     },
 
-    refreshToken_: function() {
+    refreshToken_() {
       const opts = {
         client_id: this.sharedAuthState_[OAUTH_CLIENT_ID],
         immediate: true,
@@ -183,8 +187,8 @@
       });
     },
 
-    getResponseObject_: function(response) {
-      let JSON_PREFIX = ')]}\'';
+    getResponseObject_(response) {
+      const JSON_PREFIX = ')]}\'';
       return response.text().then((text) => {
         return JSON.parse(text.substring(JSON_PREFIX.length));
       });

@@ -47,11 +47,11 @@
       updateTimeoutID_: Number,
     },
 
-    attached: function() {
+    attached() {
       this.listen(document, 'visibilitychange', '_handleVisibilityChange');
     },
 
-    detached: function() {
+    detached() {
       this.unlisten(document, 'visibilitychange', '_handleVisibilityChange');
       window.clearTimeout(this.updateTimeoutID_);
       // Because a reference to this element is maintained in tricium.js,
@@ -60,12 +60,12 @@
       this.analyzerResults_ = [];
     },
 
-    reload: function() {
+    reload() {
       this.loading_ = true;
       window.clearTimeout(this.updateTimeoutID_);
 
-      let pluginName = this.pluginContext.getPluginName();
-      let project = this.change.project;
+      const pluginName = this.pluginContext.getPluginName();
+      const project = this.change.project;
 
       return this.$.client.getConfig(project, pluginName).then((config) => {
           this.baseUrl = config.triciumHost;
@@ -74,11 +74,11 @@
         });
     },
 
-    handleAuthChange_: function(e) {
+    handleAuthChange_(e) {
       this.loggedIn_ = !!e.detail.loggedIn;
     },
 
-    refreshProgress_: function() {
+    refreshProgress_() {
       return this.$.client.getOAuthToken().then(() => {
         return this.$.client.getProgress(this.change, this.revision).then(
             (allAnalyzers) => {
@@ -96,20 +96,20 @@
       });
     },
 
-    updateAnalyzers_: function(allAnalyzers) {
+    updateAnalyzers_(allAnalyzers) {
       this.updateIntervalMs_ = DEFAULT_UPDATE_INTERVAL_MS;
       this.lastUpdate_ = new Date().toLocaleTimeString();
-      this.analyzerResults_ = allAalyzers;
+      this.analyzerResults_ = allAnalyzers;
     },
 
-    handleVisibilityChange_: function(e) {
+    handleVisibilityChange_(e) {
       if (!document.hidden && this.needsUpdate_) {
         this.refreshProgress_();
         this.needsUpdate_ = false;
       }
     },
 
-    updateTimerFired_: function() {
+    updateTimerFired_() {
       if (document.hidden) {
         this.needsUpdate_ = true;
         return;
@@ -117,33 +117,33 @@
       this.refreshProgress_();
     },
 
-    computeTitleText_: function(analyzerResults) {
+    computeTitleText_(analyzerResults) {
       return (analyzerResults.length === 0 ? 'No ' : '') + 'Analyzers';
     },
 
-    getAnalyzerRunClass_: function(analyzer) {
+    getAnalyzerRunClass_(analyzer) {
       if (analyzer.state === AnalyzerStatus.PENDING) {
         return 'pending';
       }
       if (analyzer.state === AnalyzerStatus.RUNNING) {
         return 'running';
       }
-      if (analyzer.state === AnalyzerResult.SUCCESS) {
+      if (analyzer.state === AnalyzerStatus.SUCCESS) {
         return 'success';
       }
-      if (analyzer.state === AnalyzerResult.FAILURE) {
+      if (analyzer.state === AnalyzerStatus.FAILURE) {
         return 'failure';
       }
       return '';
     },
 
-    getAnalyzerIcon_: function(analyzer) {
-      let iconMap = {
+    getAnalyzerIcon_(analyzer) {
+      const iconMap = {
         'pending': '\u29D6',
         'running': '\u29D6',
         'success': '\u2713',
         'failure': '\u26A0',
-        '': ''
+        '': '',
       };
       return iconMap[this.getAnalyzerRunClass_(analyzer)];
     },

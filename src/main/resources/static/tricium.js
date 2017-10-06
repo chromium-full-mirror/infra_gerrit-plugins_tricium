@@ -16,29 +16,30 @@
 
     addEventListeners() {
       this.gerritPlugin_.on('showchange', this.handleShowChange.bind(this));
-    };
+    }
 
     loadElement() {
-      return new Promise(function(resolve, reject) {
-        Polymer.Base.importHref(this.gerritPlugin_.url(ELEMENT), resolve, reject);
-      }.bind(this));
+      return new Promise((resolve, reject) => {
+        Polymer.Base.importHref(
+            this.gerritPlugin_.url(ELEMENT), resolve, reject);
+      });
     }
 
     handleShowChange(change, revision) {
-      this.loadElement().then(function() {
+      this.loadElement().then(() => {
         if (!this.element_) {
           this.element_ = this.createElement();
         }
         this.configureElement(change, revision);
         this.appendElementToPage();
         this.element_.reload();
-      }.bind(this)).catch(function(err) {
+      }).catch((err) => {
         console.error('Could not load Tricium element', err);
       });
     }
 
     createElement() {
-      var el = document.createElement('tricium-view');
+      const el = document.createElement('tricium-view');
       el.pluginContext = this.gerritPlugin_;
       return el;
     }
@@ -49,9 +50,10 @@
     }
 
     appendElementToPage() {
-      var appEl = Polymer.dom(document).querySelector('gr-app');
-      var changeView = Polymer.dom(appEl.root).querySelector('gr-change-view');
-      var messageList =
+      const appEl = Polymer.dom(document).querySelector('gr-app');
+      const changeView = Polymer.dom(appEl.root).querySelector(
+          'gr-change-view');
+      const messageList =
           Polymer.dom(changeView.root).querySelector('gr-messages-list');
       Polymer.dom(messageList.parentNode).insertBefore(this.element_,
           messageList);
@@ -60,10 +62,10 @@
 
   // Gerrit may not be defined (say, in a test environment).
   if (window.Gerrit) {
-    Gerrit.install(function(self) {
+    Gerrit.install((self) => {
       // Currently only supported in PolyGerrit.
       if (!window.Polymer) { return; }
-      var plugin = new TriciumPlugin(self);
+      const plugin = new TriciumPlugin(self);
       plugin.addEventListeners();
     }, '0.1');
   }

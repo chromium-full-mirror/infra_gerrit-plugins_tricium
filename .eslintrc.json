@@ -1,0 +1,32 @@
+{
+  "extends": ["eslint:recommended", "google"],
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "globals": {
+    "Gerrit": false,
+    "Polymer": false,
+    "gapi": false
+  },
+  "rules": {
+    "block-spacing": ["error", "always"],
+    "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+    "camelcase": "off",
+    "eol-last": "off",
+    "indent": "off",
+    "keyword-spacing": ["error", { "after": true, "before": true }],
+    "max-len": ["error", 80, 2, { "ignoreComments": true }],
+    "new-cap": ["error", { "capIsNewExceptions": ["Polymer"] }],
+    "no-console": "off",
+    "no-var": "error",
+    "object-shorthand": ["error", "always"],
+    "prefer-arrow-callback": "error",
+    "prefer-const": "error",
+    "prefer-spread": "error",
+    "require-jsdoc": "off",
+    "semi": [2, "always"],
+    "template-curly-spacing": "error",
+    "valid-jsdoc": "off"
+  }
+}
