@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!--
+Copyright 2017 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+<title>tricium-client</title>
+
+<script src="./bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+<script src="./bower_components/web-component-tester/browser.js"></script>
+
+<link rel="import" href="./bower_components/iron-test-helpers/iron-test-helpers.html">
+<link rel="import" href="../src/main/resources/static/tricium-client.html">
+
+<test-fixture id="tricum-client-fixture">
+  <template>
+    <tricium-client></tricium-client>
+  </template>
+</test-fixture>
+
+<script>
+  suite('<tricium-client>', () => {
+    let element;
+    let otherElement;
+    let sandbox;
+
+    setup(() => {
+      element = fixture('tricum-client-fixture');
+      sandbox = sinon.sandbox.create();
+    });
+
+    teardown(() => {
+      sandbox.restore();
+    });
+
+    function nowSeconds() {
+      return ~~(Date.now() / 1000);
+    }
+
+    test('oauthTokenIsValid_ with valid token', () => {
+      assert.isTrue(element.oauthTokenIsValid_({
+        access_token: 'foo',
+        expires_at: (nowSeconds() + 3600) + '',
+      }));
+    });
+
+    test('oauthTokenIsValid_ with no access_token field', () => {
+      assert.isFalse(element.oauthTokenIsValid_({
+        expires_at: (nowSeconds() + 3600) + '',
+      }));
+    });
+
+    test('oauthTokenIsValid_ with expired token', () => {
+      assert.isFalse(element.oauthTokenIsValid_({
+        access_token: 'foo',
+        expires_at: (nowSeconds() - 5) + '',
+      }));
+    });
+
+    test('oauthTokenIsValid_ with invalid values', () => {
+      assert.isFalse(element.oauthTokenIsValid_(null));
+      assert.isFalse(element.oauthTokenIsValid_(undefined));
+      assert.isFalse(element.oauthTokenIsValid_({access_token: 'foo'}));
+    });
+  });
+</script>
+

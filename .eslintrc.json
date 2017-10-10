@@ -5,9 +5,18 @@
     "es6": true
   },
   "globals": {
+    "__TriciumPlugin": false,
+    "assert": false,
+    "fixture": false,
+    "gapi": false,
     "Gerrit": false,
     "Polymer": false,
-    "gapi": false
+    "setup": false,
+    "sinon": false,
+    "suite": false,
+    "teardown": false,
+    "test": false,
+    "WCT": false
   },
   "rules": {
     "block-spacing": ["error", "always"],
@@ -28,5 +37,11 @@
     "semi": [2, "always"],
     "template-curly-spacing": "error",
     "valid-jsdoc": "off"
+  },
+  "plugins": [
+    "html"
+  ],
+  "settings": {
+    "html/report-bad-indent": "error"
   }
 }

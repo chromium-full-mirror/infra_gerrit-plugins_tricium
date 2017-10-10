@@ -13,23 +13,67 @@ found in the LICENSE file.
 <link rel="import" href="./bower_components/iron-test-helpers/iron-test-helpers.html">
 <link rel="import" href="../src/main/resources/static/tricium-view.html">
 
-<test-fixture id="basic">
+<test-fixture id="tricium-view-fixture">
   <template>
     <tricium-view></tricium-view>
   </template>
 </test-fixture>
 
 <script>
-  suite('tricium-view basic tests', function() {
+  suite('<tricium-view>', () => {
     let element;
+    let sandbox;
 
-    setup(function() {
-      element = fixture('basic');
+    setup(() => {
+      element = fixture('tricium-view-fixture');
+      sandbox = sinon.sandbox.create();
     });
 
-    test('title with no analyzers', function() {
+    teardown(() => {
+      sandbox.restore();
+    });
+
+    test('handleAuthChange_ initial state', () => {
+      assert.isFalse(element.loggedIn_);
+    });
+
+    test('handleAuthChange_ with a ', () => {
+      element.handleAuthChange_({detail: {loggedIn: true}});
+      assert.isTrue(element.loggedIn_);
+    });
+
+    test('handleAuthChange_ initial state', () => {
+      element.handleAuthChange_({detail: {}});
+      assert.isFalse(element.loggedIn_);
+    });
+
+    test('refreshProgress_ uses exponential back-off', (done) => {
+      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
+      sandbox.stub(element.$.client, 'getProgress', () => Promise.reject());
+      const initialTimeoutMs = element.updateIntervalMs_;
+      element.refreshProgress_().catch(() => {
+        assert.isTrue(element.updateIntervalMs_ > 2 * initialTimeoutMs);
+        done();
+      });
+    });
+
+    test('computeTitleText_ with empty list', () => {
       assert.equal('No Analyzers', element.computeTitleText_([]));
     });
 
+    test('computeTitleText_ with non-empty list', () => {
+      assert.equal('Analyzers', element.computeTitleText_([{analyzer: 'Hi'}]));
+    });
+
+    test('getAnalyzerRunClass_ with valid states', () => {
+      assert.equal('pending', element.getAnalyzerRunClass_({state: 'PENDING'}));
+      assert.equal('running', element.getAnalyzerRunClass_({state: 'RUNNING'}));
+      assert.equal('success', element.getAnalyzerRunClass_({state: 'SUCCESS'}));
+      assert.equal('failure', element.getAnalyzerRunClass_({state: 'FAILURE'}));
+    });
+
+    test('getAnalyzerRunClass_ with an invalid state', () => {
+      assert.equal('', element.getAnalyzerRunClass_({state: 'BOGUS'}));
+    });
   });
 </script>
