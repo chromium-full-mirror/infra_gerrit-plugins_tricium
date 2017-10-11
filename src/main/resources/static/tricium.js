@@ -10,29 +10,29 @@
   class TriciumPlugin {
 
     constructor(gerritPlugin) {
-      this.gerritPlugin_ = gerritPlugin;
-      this.element_ = null;
+      this._gerritPlugin = gerritPlugin;
+      this._element = null;
     }
 
     addEventListeners() {
-      this.gerritPlugin_.on('showchange', this.handleShowChange.bind(this));
+      this._gerritPlugin.on('showchange', this.handleShowChange.bind(this));
     }
 
     loadElement() {
       return new Promise((resolve, reject) => {
         Polymer.Base.importHref(
-            this.gerritPlugin_.url(ELEMENT), resolve, reject);
+            this._gerritPlugin.url(ELEMENT), resolve, reject);
       });
     }
 
     handleShowChange(change, revision) {
       this.loadElement().then(() => {
-        if (!this.element_) {
-          this.element_ = this.createElement();
+        if (!this._element) {
+          this._element = this.createElement();
         }
         this.configureElement(change, revision);
         this.appendElementToPage();
-        this.element_.reload();
+        this._element.reload();
       }).catch((err) => {
         console.error('Could not load Tricium element', err);
       });
@@ -40,13 +40,13 @@
 
     createElement() {
       const el = document.createElement('tricium-view');
-      el.pluginContext = this.gerritPlugin_;
+      el.pluginContext = this._gerritPlugin;
       return el;
     }
 
     configureElement(change, revision) {
-      this.element_.change = change;
-      this.element_.revision = revision;
+      this._element.change = change;
+      this._element.revision = revision;
     }
 
     appendElementToPage() {
@@ -55,7 +55,7 @@
           'gr-change-view');
       const messageList =
           Polymer.dom(changeView.root).querySelector('gr-messages-list');
-      Polymer.dom(messageList.parentNode).insertBefore(this.element_,
+      Polymer.dom(messageList.parentNode).insertBefore(this._element,
           messageList);
     }
   }

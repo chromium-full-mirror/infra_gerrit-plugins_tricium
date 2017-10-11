@@ -38,30 +38,30 @@ found in the LICENSE file.
       return ~~(Date.now() / 1000);
     }
 
-    test('oauthTokenIsValid_ with valid token', () => {
-      assert.isTrue(element.oauthTokenIsValid_({
+    test('_oauthTokenIsValid with valid token', () => {
+      assert.isTrue(element._oauthTokenIsValid({
         access_token: 'foo',
         expires_at: (nowSeconds() + 3600) + '',
       }));
     });
 
-    test('oauthTokenIsValid_ with no access_token field', () => {
-      assert.isFalse(element.oauthTokenIsValid_({
+    test('_oauthTokenIsValid with no access_token field', () => {
+      assert.isFalse(element._oauthTokenIsValid({
         expires_at: (nowSeconds() + 3600) + '',
       }));
     });
 
-    test('oauthTokenIsValid_ with expired token', () => {
-      assert.isFalse(element.oauthTokenIsValid_({
+    test('_oauthTokenIsValid with expired token', () => {
+      assert.isFalse(element._oauthTokenIsValid({
         access_token: 'foo',
         expires_at: (nowSeconds() - 5) + '',
       }));
     });
 
-    test('oauthTokenIsValid_ with invalid values', () => {
-      assert.isFalse(element.oauthTokenIsValid_(null));
-      assert.isFalse(element.oauthTokenIsValid_(undefined));
-      assert.isFalse(element.oauthTokenIsValid_({access_token: 'foo'}));
+    test('_oauthTokenIsValid with invalid values', () => {
+      assert.isFalse(element._oauthTokenIsValid(null));
+      assert.isFalse(element._oauthTokenIsValid(undefined));
+      assert.isFalse(element._oauthTokenIsValid({access_token: 'foo'}));
     });
   });
 </script>

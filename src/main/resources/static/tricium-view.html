@@ -98,12 +98,12 @@ found in the LICENSE file.
         background-image: url('images/canceled.svg');
       }
     </style>
-    <div hidden$="[[loading_]]">
+    <div hidden$="[[_loading]]">
       <div class="header">
         <div class="title">
-          <span>[[computeTitleText_(analyzerResults_)]]</span>
+          <span>[[_computeTitleText(_analyzerResults)]]</span>
         </div>
-        <div class="timestamp">Last updated at [[lastUpdate_]]</div>
+        <div class="timestamp">Last updated at [[_lastUpdate]]</div>
       </div>
       <section class="analyzers">
         <template is="dom-repeat" items="[[_analyzerResults]]" as="analyzer">
@@ -118,7 +118,7 @@ found in the LICENSE file.
     </div>
     <tricium-client id="client"
         base-url=[[baseUrl]]
-        on-auth-change="handleAuthChange_"></tricium-client>
+        on-auth-change="_handleAuthChange"></tricium-client>
   </template>
   <script src="tricium-view.js"></script>
 </dom-module>

@@ -86,15 +86,15 @@ found in the LICENSE file.
 
     test('configureElement sets the change and revision properties', () => {
       const pluginStub = sandbox.stub();
-      pluginStub.element_ = {};
+      pluginStub._element = {};
       const change = {
         _number: 1234,
         project: 'fake project',
       };
       const revision = {_number: 42};
       plugin.configureElement.call(pluginStub, change, revision);
-      assert.deepEqual(pluginStub.element_.revision, revision);
-      assert.deepEqual(pluginStub.element_.change, change);
+      assert.deepEqual(pluginStub._element.revision, revision);
+      assert.deepEqual(pluginStub._element.change, change);
     });
   });
 </script>

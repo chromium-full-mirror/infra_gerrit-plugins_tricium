@@ -25,7 +25,7 @@
     properties: {
       baseUrl: String,
 
-      sharedAuthState_: {
+      _sharedAuthState: {
         type: Object,
         value: {  // Intentional to share the object across instances.
           OAUTH_CLIENT_ID: null,
@@ -37,14 +37,14 @@
     },
 
     getOAuthToken() {
-      if (this.oauthTokenIsValid_(this.sharedAuthState_[OAUTH_TOKEN])) {
+      if (this._oauthTokenIsValid(this._sharedAuthState[OAUTH_TOKEN])) {
         return Promise.resolve();
       }
 
-      return this.configureOAuthLibrary_().then(() => {
-        return this.refreshToken_().then((token) => {
-          this.sharedAuthState_[OAUTH_TOKEN] = token;
-          this.fire('auth-change', {loggedIn: this.oauthTokenIsValid_(token)});
+      return this._configureOAuthLibrary().then(() => {
+        return this._refreshToken().then((token) => {
+          this._sharedAuthState[OAUTH_TOKEN] = token;
+          this.fire('auth-change', {loggedIn: this._oauthTokenIsValid(token)});
         }).catch((err) => {
           this.fire('auth-change', {loggedIn: false});
         });
@@ -60,7 +60,7 @@
           console.error(response.statusText);
           return {};
         }
-        return this.getResponseObject_(response);
+        return this._getResponseObject(response);
       });
     },
 
@@ -95,21 +95,21 @@
       });
     },
 
-    isSignedIn_() {
+    _isSignedIn() {
       // TODO(emso): Use Gerrit.isSignedIn() once it's available.
       return document.cookie.indexOf('XSRF_TOKEN=') !== -1;
     },
 
-    getSharedAccessToken_() {
-      const token = this.sharedAuthState_[OAUTH_TOKEN];
+    _getSharedAccessToken() {
+      const token = this._sharedAuthState[OAUTH_TOKEN];
       if (!token) {
           return null;
       }
       return token['access_token'];
     },
 
-    configureOAuthLibrary_() {
-      if (!this.isSignedIn_() || this.sharedAuthState_[OAUTH_CONFIGURED]) {
+    _configureOAuthLibrary() {
+      if (!this._isSignedIn() || this._sharedAuthState[OAUTH_CONFIGURED]) {
         return Promise.resolve();
       }
       return new Promise((resolve) => {
@@ -125,21 +125,21 @@
         if (config.hasOwnProperty('proxy_url') && config['proxy_url']) {
           gapi.config.update('oauth-flow/proxyUrl', config['proxy_url']);
         }
-        this.sharedAuthState_[OAUTH_CLIENT_ID] = config['client_id'];
-        this.sharedAuthState_[OAUTH_EMAIL] = config['email'];
+        this._sharedAuthState[OAUTH_CLIENT_ID] = config['client_id'];
+        this._sharedAuthState[OAUTH_EMAIL] = config['email'];
         return new Promise((resolve) => {
           // Loading auth has a side-effect. The URLs should be set before
           // loading it.
           gapi.load('auth', () => { gapi.auth.init(resolve); });
         });
       }).then(() => {
-        this.sharedAuthState_[OAUTH_CONFIGURED] = true;
+        this._sharedAuthState[OAUTH_CONFIGURED] = true;
       }).catch(() => {
-        this.sharedAuthState_[OAUTH_CONFIGURED] = false;
+        this._sharedAuthState[OAUTH_CONFIGURED] = false;
       });
     },
 
-    getOAuthConfig_() {
+    _getOAuthConfig() {
       const authConfigURL = '/accounts/self/oauthconfig';
       const opts = {
         headers: new Headers({Accept: 'application/json'}),
@@ -155,11 +155,11 @@
           }
           return Promise.reject(response.statusText);
         }
-        return this.getResponseObject_(response);
+        return this._getResponseObject(response);
       });
     },
 
-    oauthTokenIsValid_(token) {
+    _oauthTokenIsValid(token) {
       if (!token) { return false; }
       if (!token['access_token'] || !token['expires_at']) { return false; }
       const expiration = new Date(parseInt(token['expires_at'], 10) * 1000);
@@ -167,12 +167,12 @@
       return true;
     },
 
-    refreshToken_() {
+    _refreshToken() {
       const opts = {
-        client_id: this.sharedAuthState_[OAUTH_CLIENT_ID],
+        client_id: this._sharedAuthState[OAUTH_CLIENT_ID],
         immediate: true,
         scope: EMAIL_SCOPE,
-        login_hint: this.sharedAuthState_[OAUTH_EMAIL],
+        login_hint: this._sharedAuthState[OAUTH_EMAIL],
       };
       return new Promise((resolve, reject) => {
         gapi.auth.authorize(opts, (token) => {
@@ -187,7 +187,7 @@
       });
     },
 
-    getResponseObject_(response) {
+    _getResponseObject(response) {
       const JSON_PREFIX = ')]}\'';
       return response.text().then((text) => {
         return JSON.parse(text.substring(JSON_PREFIX.length));

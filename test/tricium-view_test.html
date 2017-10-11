@@ -33,47 +33,47 @@ found in the LICENSE file.
       sandbox.restore();
     });
 
-    test('handleAuthChange_ initial state', () => {
-      assert.isFalse(element.loggedIn_);
+    test('_handleAuthChange initial state', () => {
+      assert.isFalse(element._loggedIn);
     });
 
-    test('handleAuthChange_ with a ', () => {
-      element.handleAuthChange_({detail: {loggedIn: true}});
-      assert.isTrue(element.loggedIn_);
+    test('_handleAuthChange with a ', () => {
+      element._handleAuthChange({detail: {loggedIn: true}});
+      assert.isTrue(element._loggedIn);
     });
 
-    test('handleAuthChange_ initial state', () => {
-      element.handleAuthChange_({detail: {}});
-      assert.isFalse(element.loggedIn_);
+    test('_handleAuthChange initial state', () => {
+      element._handleAuthChange({detail: {}});
+      assert.isFalse(element._loggedIn);
     });
 
-    test('refreshProgress_ uses exponential back-off', (done) => {
+    test('_refreshProgress uses exponential back-off', (done) => {
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(element.$.client, 'getProgress', () => Promise.reject());
-      const initialTimeoutMs = element.updateIntervalMs_;
-      element.refreshProgress_().catch(() => {
-        assert.isTrue(element.updateIntervalMs_ > 2 * initialTimeoutMs);
+      const initialTimeoutMs = element._updateIntervalMs;
+      element._refreshProgress().catch(() => {
+        assert.isTrue(element._updateIntervalMs > 2 * initialTimeoutMs);
         done();
       });
     });
 
-    test('computeTitleText_ with empty list', () => {
-      assert.equal('No Analyzers', element.computeTitleText_([]));
+    test('_computeTitleText with empty list', () => {
+      assert.equal('No Analyzers', element._computeTitleText([]));
     });
 
-    test('computeTitleText_ with non-empty list', () => {
-      assert.equal('Analyzers', element.computeTitleText_([{analyzer: 'Hi'}]));
+    test('_computeTitleText with non-empty list', () => {
+      assert.equal('Analyzers', element._computeTitleText([{analyzer: 'Hi'}]));
     });
 
-    test('getAnalyzerRunClass_ with valid states', () => {
-      assert.equal('pending', element.getAnalyzerRunClass_({state: 'PENDING'}));
-      assert.equal('running', element.getAnalyzerRunClass_({state: 'RUNNING'}));
-      assert.equal('success', element.getAnalyzerRunClass_({state: 'SUCCESS'}));
-      assert.equal('failure', element.getAnalyzerRunClass_({state: 'FAILURE'}));
+    test('_getAnalyzerRunClass with valid states', () => {
+      assert.equal('pending', element._getAnalyzerRunClass({state: 'PENDING'}));
+      assert.equal('running', element._getAnalyzerRunClass({state: 'RUNNING'}));
+      assert.equal('success', element._getAnalyzerRunClass({state: 'SUCCESS'}));
+      assert.equal('failure', element._getAnalyzerRunClass({state: 'FAILURE'}));
     });
 
-    test('getAnalyzerRunClass_ with an invalid state', () => {
-      assert.equal('', element.getAnalyzerRunClass_({state: 'BOGUS'}));
+    test('_getAnalyzerRunClass with an invalid state', () => {
+      assert.equal('', element._getAnalyzerRunClass({state: 'BOGUS'}));
     });
   });
 </script>

@@ -26,25 +26,25 @@
       revision: Object,
 
       analyzerResults_: Array,
-      email_: String,
-      loading_: {
+      _email: String,
+      _loading: {
         type: Boolean,
         value: false,
       },
-      loggedIn_: {
+      _loggedIn: {
         type: Boolean,
         value: false,
       },
-      lastUpdate_: String,
-      needsUpdate_: {
+      _lastUpdate: String,
+      _needsUpdate: {
         type: Boolean,
         value: false,
       },
-      updateIntervalMs_: {
+      _updateIntervalMs: {
         type: Number,
         value: DEFAULT_UPDATE_INTERVAL_MS,
       },
-      updateTimeoutID_: Number,
+      _updateTimeoutID: Number,
     },
 
     attached() {
@@ -53,7 +53,7 @@
 
     detached() {
       this.unlisten(document, 'visibilitychange', '_handleVisibilityChange');
-      window.clearTimeout(this.updateTimeoutID_);
+      window.clearTimeout(this._updateTimeoutID);
       // Because a reference to this element is maintained in tricium.js,
       // these properties should be cleared so that stale results from other
       // changes are not shown while the new element is reloaded.
@@ -61,8 +61,8 @@
     },
 
     reload() {
-      this.loading_ = true;
-      window.clearTimeout(this.updateTimeoutID_);
+      this._loading = true;
+      window.clearTimeout(this._updateTimeoutID);
 
       const pluginName = this.pluginContext.getPluginName();
       const project = this.change.project;
@@ -70,58 +70,58 @@
       return this.$.client.getConfig(project, pluginName).then((config) => {
           this.baseUrl = config.triciumHost;
         }).then(() => {
-          this.refreshProgress_().then(() => { this.loading_ = false; });
+          this._refreshProgress().then(() => { this._loading = false; });
         });
     },
 
-    handleAuthChange_(e) {
-      this.loggedIn_ = !!e.detail.loggedIn;
+    _handleAuthChange(e) {
+      this._loggedIn = !!e.detail.loggedIn;
     },
 
-    refreshProgress_() {
+    _refreshProgress() {
       return this.$.client.getOAuthToken().then(() => {
         return this.$.client.getProgress(this.change, this.revision).then(
             (allAnalyzers) => {
-              this.updateAnalyzers_(allAnalyzers);
+              this._updateAnalyzers(allAnalyzers);
             }
         ).catch((err) => {
-              this.updateIntervalMs_ = Math.min(MAX_UPDATE_INTERVAL_MS,
-                  (1 + Math.random()) * this.updateIntervalMs_ * 2);
+              this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
+                  (1 + Math.random()) * this._updateIntervalMs * 2);
               console.error(err);
             }).then(() => {
-              this.updateTimeoutID_ =
-                  window.setTimeout(this.updateTimerFired_.bind(this),
-                      this.updateIntervalMs_);
+              this._updateTimeoutID =
+                  window.setTimeout(this._updateTimerFired.bind(this),
+                      this._updateIntervalMs);
             });
       });
     },
 
-    updateAnalyzers_(allAnalyzers) {
-      this.updateIntervalMs_ = DEFAULT_UPDATE_INTERVAL_MS;
-      this.lastUpdate_ = new Date().toLocaleTimeString();
+    _updateAnalyzers(allAnalyzers) {
+      this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
+      this._lastUpdate = new Date().toLocaleTimeString();
       this.analyzerResults_ = allAnalyzers;
     },
 
-    handleVisibilityChange_(e) {
-      if (!document.hidden && this.needsUpdate_) {
-        this.refreshProgress_();
-        this.needsUpdate_ = false;
+    _handleVisibilityChange(e) {
+      if (!document.hidden && this._needsUpdate) {
+        this._refreshProgress();
+        this._needsUpdate = false;
       }
     },
 
-    updateTimerFired_() {
+    _updateTimerFired() {
       if (document.hidden) {
-        this.needsUpdate_ = true;
+        this._needsUpdate = true;
         return;
       }
-      this.refreshProgress_();
+      this._refreshProgress();
     },
 
-    computeTitleText_(analyzerResults) {
+    _computeTitleText(analyzerResults) {
       return (analyzerResults.length === 0 ? 'No ' : '') + 'Analyzers';
     },
 
-    getAnalyzerRunClass_(analyzer) {
+    _getAnalyzerRunClass(analyzer) {
       if (analyzer.state === AnalyzerStatus.PENDING) {
         return 'pending';
       }
@@ -137,7 +137,7 @@
       return '';
     },
 
-    getAnalyzerIcon_(analyzer) {
+    _getAnalyzerIcon(analyzer) {
       const iconMap = {
         'pending': '\u29D6',
         'running': '\u29D6',
@@ -145,7 +145,7 @@
         'failure': '\u26A0',
         '': '',
       };
-      return iconMap[this.getAnalyzerRunClass_(analyzer)];
+      return iconMap[this._getAnalyzerRunClass(analyzer)];
     },
   });
 })();
