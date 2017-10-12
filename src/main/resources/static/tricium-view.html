@@ -38,10 +38,10 @@ found in the LICENSE file.
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .analyzer.scheduled {
+      .analyzer.pending {
         background-color: #e0e0e0;
       }
-      .analyzer.started {
+      .analyzer.running {
         background-color: #ffeb3b;
       }
       .analyzer.success {
@@ -50,10 +50,6 @@ found in the LICENSE file.
       .analyzer.failure {
         background-color: #f44336;
         color: #fff;
-      }
-      .analyzer.infraFailure,
-      .analyzer.canceled {
-        background-color: #ba68c8;
       }
       .analyzer:last-of-type {
         margin-right: 0;
@@ -81,8 +77,10 @@ found in the LICENSE file.
         margin-top: .25em;
         margin-left: -1.2em;
       }
-      .analyzerRun.started::before,
-      .analyzerRun.scheduled::before {
+      .analyzerRun.pending::before {
+        background-image: url('images/started.svg');
+      }
+      .analyzerRun.running::before {
         background-image: url('images/started.svg');
       }
       .analyzerRun.success::before {
@@ -90,12 +88,6 @@ found in the LICENSE file.
       }
       .analyzerRun.failure::before {
         background-image: url('images/failure.svg');
-      }
-      .analyzerRun.infraFailure::before {
-        background-image: url('images/infraFailure.svg');
-      }
-      .analyzerRun.canceled::before {
-        background-image: url('images/canceled.svg');
       }
     </style>
     <div hidden$="[[_loading]]">
