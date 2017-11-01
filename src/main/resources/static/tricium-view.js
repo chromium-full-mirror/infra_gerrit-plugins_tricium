@@ -25,7 +25,7 @@
       change: Object,
       revision: Object,
 
-      analyzerResults_: Array,
+      _analyzerResults: Array,
       _email: String,
       _loading: {
         type: Boolean,
@@ -57,7 +57,7 @@
       // Because a reference to this element is maintained in tricium.js,
       // these properties should be cleared so that stale results from other
       // changes are not shown while the new element is reloaded.
-      this.analyzerResults_ = [];
+      this._analyzerResults = [];
     },
 
     reload() {
@@ -99,7 +99,7 @@
     _updateAnalyzers(allAnalyzers) {
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
-      this.analyzerResults_ = allAnalyzers;
+      this._analyzerResults = allAnalyzers;
     },
 
     _handleVisibilityChange(e) {
