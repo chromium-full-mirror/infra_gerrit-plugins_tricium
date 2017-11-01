@@ -136,16 +136,5 @@
       }
       return '';
     },
-
-    _getAnalyzerIcon(analyzer) {
-      const iconMap = {
-        'pending': '\u29D6',
-        'running': '\u29D6',
-        'success': '\u2713',
-        'failure': '\u26A0',
-        '': '',
-      };
-      return iconMap[this._getAnalyzerRunClass(analyzer)];
-    },
   });
 })();
