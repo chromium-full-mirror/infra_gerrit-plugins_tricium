@@ -33,16 +33,13 @@ found in the LICENSE file.
       sandbox.restore();
     });
 
-    test('_handleAuthChange initial state', () => {
+    test('_loggedIn initial state', () => {
       assert.isFalse(element._loggedIn);
     });
 
-    test('_handleAuthChange with a ', () => {
+    test('_loggedIn after _handleAuthChange', () => {
       element._handleAuthChange({detail: {loggedIn: true}});
       assert.isTrue(element._loggedIn);
-    });
-
-    test('_handleAuthChange initial state', () => {
       element._handleAuthChange({detail: {}});
       assert.isFalse(element._loggedIn);
     });
