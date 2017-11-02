@@ -60,6 +60,11 @@
       this._analyzerResults = [];
     },
 
+    /**
+     * Reset the state of the element, then fetch and display analyzer progress.
+     *
+     * @return {Promise} Resolves upon completion.
+     */
     reload() {
       this._loading = true;
       window.clearTimeout(this._updateTimeoutID);
@@ -78,6 +83,11 @@
       this._loggedIn = !!e.detail.loggedIn;
     },
 
+    /**
+     * Fetch current progress state and update properties.
+     *
+     * @return {Promise} Resolves upon completion.
+     */
     _refreshProgress() {
       return this.$.client.getOAuthToken().then(() => {
         return this.$.client.getProgress(this.change, this.revision).then(
@@ -96,6 +106,12 @@
       });
     },
 
+    /**
+     * Update element state based on the given fetched progress.
+     *
+     * @param {Object[]} allAnalyzers Array of fetched analyzer objects. Each
+     *     object is expected to have the properties "state", "url" and "name".
+     */
     _updateAnalyzers(allAnalyzers) {
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
@@ -121,6 +137,12 @@
       return (analyzerResults.length === 0 ? 'No ' : '') + 'Analyzers';
     },
 
+    /**
+     * Return a string indicating status to use as a class string.
+     *
+     * @param {Object} An analyzer object with a "class" property.
+     * @return {string} A CSS class name, or empty string.
+     */
     _getAnalyzerRunClass(analyzer) {
       if (analyzer.state === AnalyzerStatus.PENDING) {
         return 'pending';

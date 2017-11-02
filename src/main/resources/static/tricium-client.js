@@ -36,6 +36,11 @@
       },
     },
 
+    /**
+     * Fetch and store a new OAuth token if necessary.
+     *
+     * @return {Promise} Resolves when finished.
+     */
     getOAuthToken() {
       if (this._oauthTokenIsValid(this._sharedAuthState[OAUTH_TOKEN])) {
         return Promise.resolve();
@@ -51,6 +56,14 @@
       });
     },
 
+
+    /**
+     * Fetch the config object for this project.
+     *
+     * @param {string} projectName Gerrit project name.
+     * @param {string} pluginName Plugin name.
+     * @return {Promise} Resolves to the fetched config object.
+     */
     getConfig(projectName, pluginName) {
       const configURL = '/projects/' + encodeURIComponent(projectName) + '/' +
           encodeURIComponent(pluginName) + '~config';
@@ -100,6 +113,7 @@
       return document.cookie.indexOf('XSRF_TOKEN=') !== -1;
     },
 
+     /** @return {?string} The stored OAuth access token. */
     _getSharedAccessToken() {
       const token = this._sharedAuthState[OAUTH_TOKEN];
       if (!token) {
@@ -108,6 +122,16 @@
       return token['access_token'];
     },
 
+    /**
+     * Use the gapi library to configure OAuth.
+     *
+     * This involves fetching the OAuth config from Gerrit, then loading the
+     * gapi.auth library and initialize it. When completed, the state of this
+     * element is updated. If the configuration has already been done, it
+     * is not repeated.
+     *
+     * @return {Promise} Resolves upon completion.
+     */
     _configureOAuthLibrary() {
       if (!this._isSignedIn() || this._sharedAuthState[OAUTH_CONFIGURED]) {
         return Promise.resolve();
@@ -139,6 +163,11 @@
       });
     },
 
+    /**
+     * Request OAuth config info from the Gerrit REST API.
+     *
+     * @return {Promise} Resolves to a token object.
+     */
     _getOAuthConfig() {
       const authConfigURL = '/accounts/self/oauthconfig';
       const opts = {
@@ -159,6 +188,14 @@
       });
     },
 
+    /**
+     * Validate the given token object.
+     *
+     * @param {Object} token A token object. The fields that should
+     *     be present are listed in the OAuth2 specification (RFC 6749):
+     *     https://goo.gl/HZH4Nq.
+     * @return {boolean} True if valid.
+     */
     _oauthTokenIsValid(token) {
       if (!token) { return false; }
       if (!token['access_token'] || !token['expires_at']) { return false; }
@@ -167,6 +204,14 @@
       return true;
     },
 
+    /**
+     * Request a new OAuth token using gapi.
+     *
+     * This requires gapi.auth to be configured first with
+     * _configureOAuthLibrary().
+     *
+     * @return {Promise} Resolves to a token object.
+     */
     _refreshToken() {
       const opts = {
         client_id: this._sharedAuthState[OAUTH_CLIENT_ID],
