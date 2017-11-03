@@ -109,8 +109,10 @@
     /**
      * Update element state based on the given fetched progress.
      *
-     * @param {Object[]} allAnalyzers Array of fetched analyzer objects. Each
-     *     object is expected to have the properties "state", "url" and "name".
+     * The fields in the AnalyzerProgress objects are specified in the
+     * Tricium API: See API specification in: https://goo.gl/rA5H1m
+     *
+     * @param {AnalyzerProgress[]} allAnalyzers Fetched analyzer progress.
      */
     _updateAnalyzers(allAnalyzers) {
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
@@ -140,7 +142,7 @@
     /**
      * Return a string indicating status to use as a class string.
      *
-     * @param {Object} An analyzer object with a "class" property.
+     * @param {AnalyzerProgress} An object with a "state" property.
      * @return {string} A CSS class name, or empty string.
      */
     _getAnalyzerRunClass(analyzer) {

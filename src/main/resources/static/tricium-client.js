@@ -77,35 +77,95 @@
       });
     },
 
+    /**
+     * Make a Progress request to the Tricium server.
+     *
+     * For more about the request and response fields for the Progress
+     * method, see the Tricium proto definitions: https://goo.gl/rA5H1m
+     *
+     * The change and revision passed to this function come from the Gerrit
+     * REST API. API reference:
+     *   ChangeInfo: https://goo.gl/RgRGZV
+     *   RevisionInfo: https://goo.gl/BhtmGL
+     *
+     * @param {ChangeInfo} change The current CL.
+     * @param {RevisionInfo} revision The current patchset.
+     * @return {Promise} Resolves to a list of AnalyzerProgress objects,
+     *     or rejects with an error.
+     */
     getProgress(change, revision) {
-      /* TODO(emso): Include when there is a non-RPC endpoint to call.
-      let url = this.baseUrl + '/progress' +
-                    '?change=' + change +
-                    '&revision=' + revision;
-      let headers = new Headers();
-      let accessToken = this._getSharedAccessToken();
+      const service = 'tricium.Tricium';
+      const method = 'Progress';
+      const request = {
+          consumer: 'GERRIT',
+          gerritDetails: {
+            project: change.project,
+            change: change.id,
+            revision: revision.ref,
+        },
+      };
+      return this._rpcRequest(this.baseUrl, service, method, request)
+          .then((response) => response.analyzerProgress);
+    },
+
+    /**
+     * Make a pRPC request with JSON data to the given service.
+     *
+     * For more about pRPC, see:
+     *   https://godoc.org/github.com/luci/luci-go/grpc/prpc
+     *
+     * Note: This could be changed to use the rpc-client element from
+     * https://chromium.googlesource.com/infra/luci/luci-go/+/master/web/inc/rpc/.
+     * However, that element has extra dependencies expected to be managed via
+     * bower and compiled together with vulcanize. It also has more
+     * functionality than is required here.
+     *
+     * @param {string} host The host to send requests to.
+     * @param {string} service Service name, including package name.
+     * @param {string} method The RPC method name.
+     * @param {Object} request Request message object.
+     * @return {Promise} Resolves to a response message body,
+     *     or rejects with an error.
+     */
+    _rpcRequest(host, service, method, request) {
+      const url = `https://${host}/prpc/${service}/${method}`;
+      const headers = new Headers({
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+      });
+      const accessToken = this._getSharedAccessToken();
       if (accessToken) {
         headers.set('Authorization', 'Bearer ' + accessToken);
       }
-      let opts = {headers: headers};
+      const opts = {
+          headers,
+          method: 'POST',
+          body: request,
+      };
       return fetch(url, opts).then((response) => {
-        if (!response.ok) {
-          console.error(response.statusText);
-          if (response.body && response.body.then) {
-            return response.body.then((text) => {
-              return Promise.reject(text);
-            });
-          }
-          return Promise.reject(response.statusText);
+        return this._handleRpcResponse(response);
+      });
+    },
+
+    /**
+     * Check and parse a pRPC response.
+     *
+     * @param {Response} response The Response object from a fetch call.
+     * @return {Promise} Resolves to an object with the response message,
+     *     or rejects with an error message.
+     */
+    _handleRpcResponse(response) {
+      const codeHeader = response.headers.get('X-Prpc-Grpc-Code');
+      const codeNumber = parseInt(codeHeader, 10);
+      if (codeNumber !== 0) {
+        let message = 'X-Prpc-Grpc-Code: ' + codeHeader;
+        if (isNaN(codeNumber)) {
+          message += '\nHTTP status: ' + response.status;
         }
-        return response.json();
-      });
-      */
-      return new Promise(() => {
-        return {
-            analyzer_progress: [{analyzer: 'Hello'}],
-        };
-      });
+        return response.text().then(
+            (text) => Promise.reject(message + '\nBody: ' + text));
+      }
+      return this._getResponseObject(response, ')]}\'');
     },
 
     _isSignedIn() {
@@ -232,10 +292,9 @@
       });
     },
 
-    _getResponseObject(response) {
-      const JSON_PREFIX = ')]}\'';
+    _getResponseObject(response, jsonPrefix = ')]}\'') {
       return response.text().then((text) => {
-        return JSON.parse(text.substring(JSON_PREFIX.length));
+        return JSON.parse(text.substring(jsonPrefix.length));
       });
     },
   });

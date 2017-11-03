@@ -20,18 +20,14 @@ found in the LICENSE file.
 </test-fixture>
 
 <script>
-  suite('<tricium-client>', () => {
+  suite('<tricium-client> oauth-related behavior', () => {
     let element;
-    let otherElement;
-    let sandbox;
 
     setup(() => {
       element = fixture('tricum-client-fixture');
-      sandbox = sinon.sandbox.create();
     });
 
     teardown(() => {
-      sandbox.restore();
     });
 
     function nowSeconds() {
@@ -62,6 +58,95 @@ found in the LICENSE file.
       assert.isFalse(element._oauthTokenIsValid(null));
       assert.isFalse(element._oauthTokenIsValid(undefined));
       assert.isFalse(element._oauthTokenIsValid({access_token: 'foo'}));
+    });
+  });
+
+  suite('<tricium-client> rpc request behavior', () => {
+    let element;
+    let server;
+
+    const change = {
+      id: 'myProject~master~I3ea943139cb62e86071996f2480e58bf3eeb9dd2',
+      project: 'myProject',
+      branch: 'master',
+      subject: 'Implement Feature X',
+    };
+
+    const revision = {
+      kind: 'REWORK',
+      ref: 'refs/changes/99/4799/2',
+      subject: 'My Patchset',
+    };
+
+    setup(() => {
+      element = fixture('tricum-client-fixture');
+      sinon.stub(window, 'fetch');
+    });
+
+    teardown(() => {
+      window.fetch.restore();
+    });
+
+    test('getProgress success', () => {
+      const okResponseHeaders = {
+        'Content-Type': 'application/json',
+        'X-Prpc-Grpc-Code': '0',
+      };
+      const prefix = ')]}\'';
+      const successResponse = {
+        runId: '56511',
+        state: 'SUCCESS',
+        analyzerProgress: [
+          {
+            analyzer: 'GitFileIsolator',
+            state: 'SUCCESS',
+            swarmingTaskId: 'https://swarm.com/task?id=390a',
+          },
+          {
+            analyzer: 'Spacey',
+            state: 'SUCCESS',
+            swarmingTaskId: 'https://swarm.com/task?id=390b',
+            numComments: 2,
+          },
+        ],
+      };
+      const response = new window.Response(prefix + JSON.stringify(successResponse), {
+        status: 200,
+        headers: okResponseHeaders,
+      });
+      window.fetch.returns(Promise.resolve(response));
+      const promise = element.getProgress(change, revision);
+      promise.then((response) => {
+        assert.deepEqual(response, successResponse.analyzerProgress);
+      }).catch((error) => {
+        assert.fail('Promise should not reject.');
+      });
+    });
+
+    test('getProgress with error response', () => {
+      const response = new window.Response('Invalid Argument', {
+        status: 400,
+        headers: {'X-Prpc-Grpc-Code': '3'},
+      });
+      window.fetch.returns(Promise.resolve(response));
+      element.getProgress(change, revision).then((response) => {
+        assert.fail('Promise should reject.');
+      }).catch((error) => {
+        assert.equal(error, 'X-Prpc-Grpc-Code: 3\nBody: Invalid Argument');
+      });
+    });
+
+    test('getProgress with invalid response', () => {
+      const response = new window.Response('No pRPC code', {
+        status: 400,
+      });
+      window.fetch.returns(Promise.resolve(response));
+      element.getProgress(change, revision).then((response) => {
+        assert.fail('Promise should reject.');
+      }).catch((error) => {
+        assert.equal(error, 'X-Prpc-Grpc-Code: null\n' +
+            'HTTP status: 400\nBody: No pRPC code');
+      });
     });
   });
 </script>
