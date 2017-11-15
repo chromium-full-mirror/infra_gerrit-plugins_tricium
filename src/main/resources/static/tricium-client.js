@@ -140,7 +140,7 @@
       const opts = {
           headers,
           method: 'POST',
-          body: request,
+          body: JSON.stringify(request),
       };
       return fetch(url, opts).then((response) => {
         return this._handleRpcResponse(response);
