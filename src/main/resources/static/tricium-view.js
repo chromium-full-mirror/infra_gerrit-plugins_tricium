@@ -8,11 +8,15 @@
   const DEFAULT_UPDATE_INTERVAL_MS = 1000 * 5;
   const MAX_UPDATE_INTERVAL_MS = 1000 * 60 * 5;
 
-  const AnalyzerStatus = {
-    PENDING: 'PENDING',
-    RUNNING: 'RUNNING',
-    FAILURE: 'FAILURE',
-    SUCCESS: 'SUCCESS',
+  /**
+   * Enum of possible analyzer states to show.
+   * See the State enum in the Tricium API: https://goo.gl/rA5H1m.
+   */
+  const AnalyzerState = {
+    PENDING: 'pending',
+    RUNNING: 'running',
+    FAILURE: 'failure',
+    SUCCESS: 'success',
   };
 
   Polymer({
@@ -150,25 +154,13 @@
     },
 
     /**
-     * Return a string indicating status to use as a class string.
+     * Return a string indicating analyzer state.
      *
      * @param {AnalyzerProgress} An object with a "state" property.
-     * @return {string} A CSS class name, or empty string.
+     * @return {string} Analyzer state. May be used as a CSS class name.
      */
-    _getAnalyzerRunClass(analyzer) {
-      if (analyzer.state === AnalyzerStatus.PENDING) {
-        return 'pending';
-      }
-      if (analyzer.state === AnalyzerStatus.RUNNING) {
-        return 'running';
-      }
-      if (analyzer.state === AnalyzerStatus.SUCCESS) {
-        return 'success';
-      }
-      if (analyzer.state === AnalyzerStatus.FAILURE) {
-        return 'failure';
-      }
-      return '';
+    _getAnalyzerClass(result) {
+      return AnalyzerState[result.state] || '';
     },
   });
 })();
