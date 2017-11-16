@@ -105,12 +105,10 @@ found in the LICENSE file.
       </div>
       <section class="analyzers-section">
         <template is="dom-repeat" items="[[_analyzerResults]]" as="result">
-          <div class$="analyzer [[_getAnalyzerRunClass(result)]]">
-            <!-- TODO(qyearsley): Change to use
-                 <swarmingUrl>/task=<swarmingTaskId> as href below. -->
+          <div class$="analyzer [[_getAnalyzerClass(result)]]">
              <a class="title"
                 aria-label$="[[result.analyzer]] [[_getAnalyzerClass(result)]]"
-                href$="[[result.swarmingTaskId]]" target="_blank">
+                href$="[[_getAnalyzerUrl(result)]]" target="_blank">
                 [[result.analyzer]]</a>
           </div>
         </template>

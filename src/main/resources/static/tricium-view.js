@@ -155,11 +155,16 @@
     /**
      * Return a string indicating analyzer state.
      *
-     * @param {AnalyzerProgress} An object with a "state" property.
+     * @param {AnalyzerProgress} result An object with a "state" property.
      * @return {string} Analyzer state. May be used as a CSS class name.
      */
     _getAnalyzerClass(result) {
       return AnalyzerState[result.state] || '';
+    },
+
+    /** Return a URL to view details for a particular analyzer run. */
+    _getAnalyzerUrl(result) {
+      return `${result.swarmingUrl}/task?id=${result.swarmingTaskId}`;
     },
   });
 })();

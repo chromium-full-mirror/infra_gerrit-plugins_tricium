@@ -48,22 +48,26 @@ const view = document.getElementById('view');
 view._analyzerResults = [
   {
     analyzer: 'GitFileIsolator',
-    swarmingTaskId: 'http://example.com/1',
+    swarmingUrl: 'http://example.com',
+    swarmingTaskId: '1',
     state: 'SUCCESS',
   },
   {
     analyzer: 'NotFinished',
-    swarmingTaskId: 'http://example.com/2',
+    swarmingUrl: 'http://example.com',
+    swarmingTaskId: '2',
     state: 'RUNNING',
   },
   {
     analyzer: 'NotStarted',
-    swarmingTaskId: 'http://example.com/3',
+    swarmingUrl: 'http://example.com',
+    swarmingTaskId: '3',
     state: 'PENDING',
   },
   {
     analyzer: 'Broken',
-    swarmingTaskId: 'http://example.com/4',
+    swarmingUrl: 'http://example.com',
+    swarmingTaskId: '4',
     state: 'FAILURE',
   },
 ];
