@@ -85,5 +85,16 @@ bower install
 
 Then, you can run all of the tests from the tricium plugin directory root with
 the `wct` command with no arguments. See `wct --help` for more options related
-to running the tests. Alternatively, you can run a server to interactively run
-the tests with `polymer serve`.
+to running the tests.
+
+### Previewing UI with a static server
+
+With a local static web server, such as the one provided by [Polymer
+CLI](https://www.polymer-project.org/1.0/docs/tools/polymer-cli), you can also
+view and tweak UI interactively.
+
+To install the Polymer tool-set, run `npm install -g polymer-cli`.
+
+After running `polymer serve`, you can view an example of how the
+tricium-element appears by navigating to:
+http://localhost:8081/components/tricium/src/main/resources/static/example.html

@@ -135,8 +135,18 @@
       this._refreshProgress();
     },
 
-    _computeTitleText(analyzerResults) {
-      return (analyzerResults.length === 0 ? 'No ' : '') + 'Analyzers';
+    _computeTitleText(results) {
+      if (!results || results.length == 0) {
+        return 'No Analyzers';
+      }
+      return 'Analyzers';
+    },
+
+    _computeUpdateText(lastUpdate) {
+      if (!lastUpdate) {
+        return '';
+      }
+      return `Last updated at ${lastUpdate}`;
     },
 
     /**

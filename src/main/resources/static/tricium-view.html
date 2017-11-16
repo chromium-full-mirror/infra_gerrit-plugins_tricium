@@ -11,30 +11,41 @@ found in the LICENSE file.
       :host {
         border: 1px solid #ddd;
         display: block;
-        margin: 1em var(--default-hozizontal-margin, 1rem);
+        margin: 1em 0;
+      }
+      .container {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
       }
       .header {
-        background-color: #f6f6f6;
-        border-bottom: 1px solid #ebebeb;
-        display: flex;
+        background-color: #fafafa;
+        border-bottom: 1px solid #ddd;
         justify-content: space-between;
-        padding: .5em var(--default-hozizontal-margin, .5rem);
+        min-height: 3.2em;
+        padding: .5em var(--default-horizontal-margin, 1rem);
       }
-      .header .timestamp {
-        color: #777;
+      .header .label {
+        font: inherit;
+        font-family: var(--font-family-bold);
+        font-size: 1.17em;
+        margin-right: 1em;
       }
-      .analyzers {
+      .header .update {
+        color: rgba(0, 0, 0, .7);
+      }
+      .analyzers-section {
         display: flex;
         flex-wrap: wrap;
         padding: .5em 0 0 .5em;
       }
       .analyzer {
+        border: 1px solid #ccc;
         display: flex;
         font-size: .9em;
-        margin-right: 1px;
-        max-width: 1.35em;
+        margin: 0 .5em .5em 0;
         overflow: hidden;
-        padding: .45em 0em .45em 1.35em;
+        padding: .45em 1.35em;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
@@ -51,59 +62,56 @@ found in the LICENSE file.
         background-color: #f44336;
         color: #fff;
       }
-      .analyzer:last-of-type {
-        margin-right: 0;
-        max-width: none;
-        padding: .45em 1.35em;
-      }
-      .analyzerRun {
-        text-decoration: none;
+      .analyzer .title {
         color: #000;
+        text-decoration: none;
       }
-      .analyzerRun.failure {
+      .analyzer.failure .title {
         color: #fff;
       }
-      .analyzerRun:hover {
+      .analyzer .title:hover {
         text-decoration: underline;
       }
-      .analyzerRun::before {
+      .analyzer .title::before {
         background-position: center;
         background-repeat: no-repeat;
         content: ' ';
         display: block;
         height: 1em;
         width: 1em;
-        position: absolute;
-        margin-top: .25em;
         margin-left: -1.2em;
+        margin-top: .25em;
+        position: absolute;
       }
-      .analyzerRun.pending::before {
+      .analyzer.pending .title::before {
         background-image: url('images/started.svg');
       }
-      .analyzerRun.running::before {
+      .analyzer.running .title::before {
         background-image: url('images/started.svg');
       }
-      .analyzerRun.success::before {
+      .analyzer.success .title::before {
         background-image: url('images/success.svg');
       }
-      .analyzerRun.failure::before {
+      .analyzer.failure .title::before {
         background-image: url('images/failure.svg');
       }
     </style>
     <div hidden$="[[_loading]]">
-      <div class="header">
-        <div class="title">
-          <span>[[_computeTitleText(_analyzerResults)]]</span>
+      <div class="header container">
+        <div class="container">
+          <h3 class="label">[[_computeTitleText(_analyzerResults)]]</h3>
+          <div class="update">[[_computeUpdateText(_lastUpdate)]]</div>
         </div>
-        <div class="timestamp">Last updated at [[_lastUpdate]]</div>
       </div>
-      <section class="analyzers">
-        <template is="dom-repeat" items="[[_analyzerResults]]" as="analyzer">
-          <div class$="analyzer [[_getAnalyzerRunClass(analyzer)]]">
-             <a class$="analyzerRun [[_getAnalyzerRunClass(analyzer)]]"
-                aria-label$="[[analyzer.name]] [[_getAnalyzerRunClass(analyzer)]]"
-                href$="[[analyzer.swarmingTaskId]]" target="_blank">
-                [[analyzer.analyzer]]</a>
+      <section class="analyzers-section">
+        <template is="dom-repeat" items="[[_analyzerResults]]" as="result">
+          <div class$="analyzer [[_getAnalyzerRunClass(result)]]">
+            <!-- TODO(qyearsley): Change to use
+                 <swarmingUrl>/task=<swarmingTaskId> as href below. -->
+             <a class="title"
+                aria-label$="[[result.analyzer]] [[_getAnalyzerRunClass(result)]]"
+                href$="[[result.swarmingTaskId]]" target="_blank">
+                [[result.analyzer]]</a>
           </div>
         </template>
       </section>
