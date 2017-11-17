@@ -44,23 +44,10 @@ site](https://gerrit-review.googlesource.com/Documentation/dev-readme.html).
 Below we assume that the test site directory is `../gerrit_testsite`.
 
 Rebuild the Tricium plugin jar; to ensure that it is rebuilt even if there
-are only static resource file changes, you may need to remove the .jar file:
+are only static resource file changes, you may need to remove the .jar file;
+then run the Gerrit server, using the same version of Java used to build Gerrit.
 
-```
-rm -f bazel-genfiles/plugins/tricium/tricium.jar
-rm -f ../gerrit_testsite/plugins/tricium.jar
-bazel build gerrit
-bazel build plugins/tricium
-cp bazel-genfiles/plugins/tricium/tricium.jar ../gerrit_testsite/plugins/
-```
-
-Run the Gerrit server, using the same version of Java used to build Gerrit:
-
-```
-out_base=$(bazel info output_base)
-$out_base/external/local_jdk/bin/java -jar bazel-bin/gerrit.war daemon \
-    -d ../gerrit_testsite --console-log --show-stack-trace
-```
+See the [reload-gerrit.sh](./reload-gerrit.sh) script for specific steps.
 
 Among the logs you should see a line including a message like "Loaded plugin
 tricium". You may then navigate to a change page in the local instance (you may
