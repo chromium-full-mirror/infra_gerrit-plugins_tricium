@@ -4,7 +4,6 @@
 (function() {
   'use strict';
 
-  const EMAIL_SCOPE = 'email';
   const DEFAULT_UPDATE_INTERVAL_MS = 1000 * 5;
   const MAX_UPDATE_INTERVAL_MS = 1000 * 60 * 5;
 
