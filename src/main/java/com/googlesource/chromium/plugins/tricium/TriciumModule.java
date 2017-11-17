@@ -15,10 +15,10 @@ public class TriciumModule extends RestApiModule {
 
   @Override
   protected void configure() {
-    // Point to the javascript that provides the main functionality of this plugin.
+    // Point to the JavaScript that provides the main functionality of this plugin.
     DynamicSet.bind(binder(), WebUiPlugin.class).toInstance(new JavaScriptPlugin("tricium.js"));
 
-    // Register the config endpoint used by the javascript client code.
+    // Register the config endpoint used by the JavaScript client code.
     get(PROJECT_KIND, "config").to(GetConfig.class);
   }
 }
