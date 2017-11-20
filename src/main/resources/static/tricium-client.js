@@ -102,6 +102,7 @@
             project: change.project,
             change: change.id,
             revision: revision.ref,
+            host: window.location.host,
         },
       };
       return this._rpcRequest(this.baseUrl, service, method, request)
