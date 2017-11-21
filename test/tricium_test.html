@@ -14,7 +14,7 @@ found in the LICENSE file.
   suite('TriciumPlugin', () => {
     let plugin;
     let sandbox;
-    let contextStub;
+    let pluginStub;
 
     setup(() => {
       window.Polymer = {
@@ -23,11 +23,11 @@ found in the LICENSE file.
         },
       };
       sandbox = sinon.sandbox.create();
-      contextStub = {
+      pluginStub = {
         on: () => { throw Error('not stubbed'); },
         url: () => { throw Error('not stubbed'); },
       };
-      plugin = new __TriciumPlugin(contextStub);
+      plugin = new __TriciumPlugin(pluginStub);
       assert.ok(plugin);
     });
 
@@ -36,7 +36,7 @@ found in the LICENSE file.
     });
 
     test('addEventListeners adds listener for showchange', (done) => {
-      sandbox.stub(contextStub, 'on', (eventName) => {
+      sandbox.stub(pluginStub, 'on', (eventName) => {
         assert.equal(eventName, 'showchange');
         done();
       });
@@ -44,7 +44,7 @@ found in the LICENSE file.
     });
 
     test('loadElement uses importHref to load tricium-view', (done) => {
-      sandbox.stub(contextStub, 'url', (path) => {
+      sandbox.stub(pluginStub, 'url', (path) => {
         return 'https://www.example.com' + path;
       });
       sandbox.stub(Polymer.Base, 'importHref', (url, resolve, reject) => {
@@ -77,11 +77,11 @@ found in the LICENSE file.
       plugin.handleShowChange(change, revision);
     });
 
-    test('createElement sets the plugin context object', () => {
+    test('createElement sets the plugin object', () => {
       const el = {};
       sandbox.stub(document, 'createElement', () => el);
       plugin.createElement();
-      assert.deepEqual(el.pluginContext, contextStub);
+      assert.deepEqual(el.plugin, pluginStub);
     });
 
     test('configureElement sets the change and revision properties', () => {

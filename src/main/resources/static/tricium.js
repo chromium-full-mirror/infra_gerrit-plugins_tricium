@@ -12,23 +12,24 @@
     /**
      * Create an empty TriciumPlugin instance.
      *
-     * @param {Plugin} gerritPlugin An object used to contain the plugin.
-     *    Schema for Plugin: https://goo.gl/6nfYna.
+     * Documentation for Plugin: https://goo.gl/6nfYna.
+     *
+     * @param {Plugin} plugin JavaScipt plugin API object.
      */
-    constructor(gerritPlugin) {
-      this._gerritPlugin = gerritPlugin;
+    constructor(plugin) {
+      this._plugin = plugin;
       this._element = null;
     }
 
     addEventListeners() {
-      this._gerritPlugin.on('showchange', this.handleShowChange.bind(this));
+      this._plugin.on('showchange', this.handleShowChange.bind(this));
     }
 
     /** @return {Promise} Resolves when the element is loaded. */
     loadElement() {
       return new Promise((resolve, reject) => {
         Polymer.Base.importHref(
-            this._gerritPlugin.url(ELEMENT), resolve, reject);
+            this._plugin.url(ELEMENT), resolve, reject);
       });
     }
 
@@ -59,7 +60,7 @@
 
     createElement() {
       const el = document.createElement('tricium-view');
-      el.pluginContext = this._gerritPlugin;
+      el.plugin = this._plugin;
       return el;
     }
 

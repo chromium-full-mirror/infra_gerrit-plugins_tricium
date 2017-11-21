@@ -24,6 +24,7 @@
 
     properties: {
       baseUrl: String,
+      plugin: Object,
 
       _sharedAuthState: {
         type: Object,
@@ -55,7 +56,6 @@
         });
       });
     },
-
 
     /**
      * Fetch the config object for this project.
@@ -169,11 +169,6 @@
       return this._getResponseObject(response, ')]}\'');
     },
 
-    _isSignedIn() {
-      // TODO(emso): Use Gerrit.isSignedIn() once it's available.
-      return document.cookie.indexOf('XSRF_TOKEN=') !== -1;
-    },
-
      /** @return {?string} The stored OAuth access token. */
     _getSharedAccessToken() {
       const token = this._sharedAuthState[OAUTH_TOKEN];
@@ -194,33 +189,38 @@
      * @return {Promise} Resolves upon completion.
      */
     _configureOAuthLibrary() {
-      if (!this._isSignedIn() || this._sharedAuthState[OAUTH_CONFIGURED]) {
-        return Promise.resolve();
-      }
-      return new Promise((resolve) => {
-        // gapi.config is available in 'config_min', not 'config'. More details about gapi:
-        // https://developers.google.com/api-client-library/javascript/reference/referencedocs
-        gapi.load('config_min', resolve);
-      }).then(() => {
-        return this.getOAuthConfig_();
-      }).then((config) => {
-        if (config.hasOwnProperty('auth_url') && config['auth_url']) {
-          gapi.config.update('oauth-flow/authUrl', config['auth_url']);
+      return this.plugin.restApi().getLoggedIn().then((loggedIn) => {
+        // No need to configure OAuth if no user is logged in, or if it's
+        // already configured.
+        if (!loggedIn || this._sharedAuthState[OAUTH_CONFIGURED]) {
+          return Promise.resolve();
         }
-        if (config.hasOwnProperty('proxy_url') && config['proxy_url']) {
-          gapi.config.update('oauth-flow/proxyUrl', config['proxy_url']);
-        }
-        this._sharedAuthState[OAUTH_CLIENT_ID] = config['client_id'];
-        this._sharedAuthState[OAUTH_EMAIL] = config['email'];
+
         return new Promise((resolve) => {
-          // Loading auth has a side-effect. The URLs should be set before
-          // loading it.
-          gapi.load('auth', () => { gapi.auth.init(resolve); });
+          // gapi.config is available in 'config_min', not 'config'. More details about gapi:
+          // https://developers.google.com/api-client-library/javascript/reference/referencedocs
+          gapi.load('config_min', resolve);
+        }).then(() => {
+          return this.getOAuthConfig_();
+        }).then((config) => {
+          if (config.hasOwnProperty('auth_url') && config['auth_url']) {
+            gapi.config.update('oauth-flow/authUrl', config['auth_url']);
+          }
+          if (config.hasOwnProperty('proxy_url') && config['proxy_url']) {
+            gapi.config.update('oauth-flow/proxyUrl', config['proxy_url']);
+          }
+          this._sharedAuthState[OAUTH_CLIENT_ID] = config['client_id'];
+          this._sharedAuthState[OAUTH_EMAIL] = config['email'];
+          return new Promise((resolve) => {
+            // Loading auth has a side-effect. The URLs should be set before
+            // loading it.
+            gapi.load('auth', () => { gapi.auth.init(resolve); });
+          });
+        }).then(() => {
+          this._sharedAuthState[OAUTH_CONFIGURED] = true;
+        }).catch(() => {
+          this._sharedAuthState[OAUTH_CONFIGURED] = false;
         });
-      }).then(() => {
-        this._sharedAuthState[OAUTH_CONFIGURED] = true;
-      }).catch(() => {
-        this._sharedAuthState[OAUTH_CONFIGURED] = false;
       });
     },
 

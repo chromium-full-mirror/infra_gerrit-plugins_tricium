@@ -23,7 +23,7 @@
 
     properties: {
       baseUrl: String,
-      pluginContext: Object,
+      plugin: Object,
       projectName: String,
       change: Object,
       revision: Object,
@@ -72,7 +72,7 @@
       this._loading = true;
       window.clearTimeout(this._updateTimeoutID);
 
-      const pluginName = this.pluginContext.getPluginName();
+      const pluginName = this.plugin.getPluginName();
       const project = this.change.project;
 
       return this.$.client.getConfig(project, pluginName).then((config) => {
