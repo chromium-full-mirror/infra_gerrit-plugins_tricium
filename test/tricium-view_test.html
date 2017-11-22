@@ -62,15 +62,15 @@ found in the LICENSE file.
       assert.equal('Analyzers', element._computeTitleText([{analyzer: 'Hi'}]));
     });
 
-    test('_getAnalyzerRunClass with valid states', () => {
-      assert.equal('pending', element._getAnalyzerRunClass({state: 'PENDING'}));
-      assert.equal('running', element._getAnalyzerRunClass({state: 'RUNNING'}));
-      assert.equal('success', element._getAnalyzerRunClass({state: 'SUCCESS'}));
-      assert.equal('failure', element._getAnalyzerRunClass({state: 'FAILURE'}));
+    test('_getAnalyzerClass with valid states', () => {
+      assert.equal('pending', element._getAnalyzerClass({state: 'PENDING'}));
+      assert.equal('running', element._getAnalyzerClass({state: 'RUNNING'}));
+      assert.equal('success', element._getAnalyzerClass({state: 'SUCCESS'}));
+      assert.equal('failure', element._getAnalyzerClass({state: 'FAILURE'}));
     });
 
-    test('_getAnalyzerRunClass with an invalid state', () => {
-      assert.equal('', element._getAnalyzerRunClass({state: 'BOGUS'}));
+    test('_getAnalyzerClass with an invalid state', () => {
+      assert.equal('', element._getAnalyzerClass({state: 'BOGUS'}));
     });
   });
 </script>
