@@ -75,6 +75,7 @@ found in the LICENSE file.
       .analyzer .title::before {
         background-position: center;
         background-repeat: no-repeat;
+        background-size: 12px;
         content: ' ';
         display: block;
         height: 1em;
@@ -84,16 +85,16 @@ found in the LICENSE file.
         position: absolute;
       }
       .analyzer.pending .title::before {
-        background-image: url('images/started.svg');
+        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
       }
       .analyzer.running .title::before {
-        background-image: url('images/started.svg');
+        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
       }
       .analyzer.success .title::before {
-        background-image: url('images/success.svg');
+        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/check_black_18dp.png");
       }
       .analyzer.failure .title::before {
-        background-image: url('images/failure.svg');
+        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/close_black_18dp.png");
       }
     </style>
     <div hidden$="[[_loading]]">
