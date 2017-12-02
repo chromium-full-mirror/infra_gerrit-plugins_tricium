@@ -197,7 +197,11 @@
         }
 
         return new Promise((resolve) => {
-          // gapi.config is available in 'config_min', not 'config'. More details about gapi:
+          // gapi library shares state between clients, so if this library is
+          // already used by another plugin, there may be unexpected results.
+          // TODO(qyearsley): Check whether gapi is already configured, and if
+          // so log a message and do nothing.
+          // More about gapi:
           // https://developers.google.com/api-client-library/javascript/reference/referencedocs
           gapi.load('config_min', resolve);
         }).then(() => {
