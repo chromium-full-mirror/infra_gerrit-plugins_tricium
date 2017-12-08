@@ -97,7 +97,7 @@ found in the LICENSE file.
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/close_black_18dp.png");
       }
     </style>
-    <template is="dom-if" if="[[baseUrl]]">
+    <template is="dom-if" if="[[triciumHost]]">
       <div id="view-container" hidden$="[[_loading]]">
         <div class="header container">
           <div class="container">
@@ -118,7 +118,7 @@ found in the LICENSE file.
       </div>
     </template>
     <tricium-client id="client"
-        base-url="[[baseUrl]]" plugin="[[plugin]]"
+        base-url="[[triciumHost]]" plugin="[[plugin]]"
         on-auth-change="_handleAuthChange"></tricium-client>
   </template>
   <script src="tricium-view.js"></script>

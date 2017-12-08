@@ -23,7 +23,8 @@
      */
 
     properties: {
-      baseUrl: String,
+      gerritHost: String,
+      triciumHost: String,
       plugin: Object,
 
       _sharedAuthState: {
@@ -58,23 +59,14 @@
     },
 
     /**
-     * Fetch the config object for this project.
+     * Fetch the project config object.
      *
-     * @param {string} projectName Gerrit project name.
-     * @param {string} pluginName Plugin name.
+     * @param {string} project Gerrit project name.
      * @return {Promise} Resolves to the fetched config object.
      */
-    getConfig(projectName, pluginName) {
-      const configURL = '/projects/' + encodeURIComponent(projectName) + '/' +
-          encodeURIComponent(pluginName) + '~config';
-      const opts = {credentials: 'same-origin'};
-      return fetch(configURL, opts).then((response) => {
-        if (!response.ok) {
-          console.error(response.statusText);
-          return {};
-        }
-        return this._getResponseObject(response);
-      });
+    getConfig(projectName) {
+      return this.plugin.restApi().get(
+          `/projects/${encodeURIComponent(projectName)}/config`);
     },
 
     /**
@@ -102,10 +94,10 @@
             project: change.project,
             change: change.id,
             revision: revision.ref,
-            host: window.location.host,
+            host: this.gerritHost || window.location.host,
         },
       };
-      return this._rpcRequest(this.baseUrl, service, method, request)
+      return this._rpcRequest(this.triciumHost, service, method, request)
           .then((response) => response.analyzerProgress);
     },
 

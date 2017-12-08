@@ -44,8 +44,22 @@ this file.</p>
 <script>
 'use strict';
 
+const fakePlugin = {
+  restApi() {
+    return {
+      get(url) {
+        return Promise.resolve({});
+      },
+      getLoggedIn() {
+        return Promise.resolve(false);
+      }
+    };
+  },
+};
+
 const view = document.getElementById('view');
-view.baseUrl = 'http://example.com';
+view.triciumHost = 'tricium-dev.appspot.com';
+view.plugin = fakePlugin;
 view._analyzerResults = [
   {
     analyzer: 'GitFileIsolator',
@@ -85,7 +99,8 @@ function useExampleChange() {
   view.revision = {
     ref: 'refs/changes/14/702314/8',
   };
-  view.$.client.baseUrl = 'tricium-dev.appspot.com';
+  view.$.client.triciumHost = 'tricium-dev.appspot.com';
+  view.$.client.gerritHost = 'chromium-review.googlesource.com';
   view._refreshProgress();
 }
 
