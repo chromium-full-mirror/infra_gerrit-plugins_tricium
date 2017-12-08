@@ -8,7 +8,7 @@ found in the LICENSE file.
 <dom-module id="tricium-view">
   <template>
     <style>
-      :host {
+      #view-container {
         border: 1px solid #ddd;
         display: block;
         margin: 1em 0;
@@ -97,24 +97,26 @@ found in the LICENSE file.
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/close_black_18dp.png");
       }
     </style>
-    <div hidden$="[[_loading]]">
-      <div class="header container">
-        <div class="container">
-          <h3 class="label">[[_computeTitleText(_analyzerResults)]]</h3>
-          <div class="update">[[_computeUpdateText(_lastUpdate)]]</div>
-        </div>
-      </div>
-      <section class="analyzers-section">
-        <template is="dom-repeat" items="[[_analyzerResults]]" as="result">
-          <div class$="analyzer [[_getAnalyzerClass(result)]]">
-             <a class="title"
-                aria-label$="[[result.analyzer]] [[_getAnalyzerClass(result)]]"
-                href$="[[_getAnalyzerUrl(result)]]" target="_blank">
-                [[result.analyzer]]</a>
+    <template is="dom-if" if="[[baseUrl]]">
+      <div id="view-container" hidden$="[[_loading]]">
+        <div class="header container">
+          <div class="container">
+            <h3 class="label">[[_computeTitleText(_analyzerResults)]]</h3>
+            <div class="update">[[_computeUpdateText(_lastUpdate)]]</div>
           </div>
-        </template>
-      </section>
-    </div>
+        </div>
+        <section class="analyzers-section">
+          <template is="dom-repeat" items="[[_analyzerResults]]" as="result">
+            <div class$="analyzer [[_getAnalyzerClass(result)]]">
+               <a class="title"
+                  aria-label$="[[result.analyzer]] [[_getAnalyzerClass(result)]]"
+                  href$="[[_getAnalyzerUrl(result)]]" target="_blank">
+                  [[result.analyzer]]</a>
+            </div>
+          </template>
+        </section>
+      </div>
+    </template>
     <tricium-client id="client"
         base-url="[[baseUrl]]" plugin="[[plugin]]"
         on-auth-change="_handleAuthChange"></tricium-client>
