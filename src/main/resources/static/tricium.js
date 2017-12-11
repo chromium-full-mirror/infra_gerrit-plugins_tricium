@@ -2,93 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-(function(window) {
-  'use strict';
+'use strict';
 
-  const ELEMENT = '/static/tricium-view.html';
+Gerrit.install((plugin) => {
+  const path = '/static/tricium-view.html';
+  Polymer.Base.importHref(plugin.url(path), () => {
+    plugin.registerCustomComponent('change-view-integration', 'tricium-view');
+  }, (err) => {
+    console.error(`Failed to load tricium-view: ${err}`);
+  });
+});
 
-  class TriciumPlugin {
-
-    /**
-     * Create an empty TriciumPlugin instance.
-     *
-     * Documentation for Plugin: https://goo.gl/6nfYna.
-     *
-     * @param {Plugin} plugin JavaScipt plugin API object.
-     */
-    constructor(plugin) {
-      this._plugin = plugin;
-      this._element = null;
-    }
-
-    addEventListeners() {
-      this._plugin.on('showchange', this.handleShowChange.bind(this));
-    }
-
-    /** @return {Promise} Resolves when the element is loaded. */
-    loadElement() {
-      return new Promise((resolve, reject) => {
-        Polymer.Base.importHref(
-            this._plugin.url(ELEMENT), resolve, reject);
-      });
-    }
-
-    /**
-     * Initialize and insert the UI element into a Gerrit change page.
-     *
-     * This may reuse an existing element object, so it reloads and resets
-     * the state of the element.
-     *
-     * Schema for ChangeInfo: https://goo.gl/RgRGZV
-     * And for RevisionInfo: https://goo.gl/BhtmGL
-     *
-     * @param {ChangeInfo} change The change shown.
-     * @param {RevisionInfo} revision The patchset shown.
-     */
-    handleShowChange(change, revision) {
-      this.loadElement().then(() => {
-        if (!this._element) {
-          this._element = this.createElement();
-        }
-        this.configureElement(change, revision);
-        this.appendElementToPage();
-        this._element.reload();
-      }).catch((err) => {
-        console.error('Could not load Tricium element', err);
-      });
-    }
-
-    createElement() {
-      const el = document.createElement('tricium-view');
-      el.plugin = this._plugin;
-      return el;
-    }
-
-    configureElement(change, revision) {
-      this._element.change = change;
-      this._element.revision = revision;
-    }
-
-    /** Insert the tricium-view element into the change page. */
-    appendElementToPage() {
-      const appEl = Polymer.dom(document).querySelector('gr-app');
-      const changeView = Polymer.dom(appEl.root).querySelector(
-          'gr-change-view');
-      const messageList =
-          Polymer.dom(changeView.root).querySelector('gr-messages-list');
-      Polymer.dom(messageList.parentNode).insertBefore(this._element,
-          messageList);
-    }
-  }
-
-  // Gerrit may not be defined (say, in a test environment).
-  if (window.Gerrit) {
-    Gerrit.install((self) => {
-      // Currently only supported in PolyGerrit.
-      if (!window.Polymer) { return; }
-      const plugin = new TriciumPlugin(self);
-      plugin.addEventListeners();
-    }, '0.1');
-  }
-  window.__TriciumPlugin = window.__TriciumPlugin || TriciumPlugin;
-})(window);

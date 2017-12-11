@@ -52,15 +52,7 @@
 
     attached() {
       this.listen(document, 'visibilitychange', '_handleVisibilityChange');
-    },
-
-    detached() {
-      this.unlisten(document, 'visibilitychange', '_handleVisibilityChange');
-      window.clearTimeout(this._updateTimeoutID);
-      // Because a reference to this element is maintained in tricium.js,
-      // these properties should be cleared so that stale results from other
-      // changes are not shown while the new element is reloaded.
-      this._analyzerResults = [];
+      this.reload();
     },
 
     /**
@@ -70,7 +62,6 @@
      */
     reload() {
       this._loading = true;
-      window.clearTimeout(this._updateTimeoutID);
       const project = this.change.project;
       return this.$.client.getConfig(project).then((config) => {
         if (!(config && config.plugin_config && plugin.plugin_config.tricium)) {
