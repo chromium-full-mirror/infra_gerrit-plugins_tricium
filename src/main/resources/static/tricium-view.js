@@ -52,6 +52,10 @@
 
     attached() {
       this.listen(document, 'visibilitychange', '_handleVisibilityChange');
+      if (!this.change) {
+        console.warn('element attached without change property set.');
+        return;
+      }
       this.reload();
     },
 
@@ -64,7 +68,7 @@
       this._loading = true;
       const project = this.change.project;
       return this.$.client.getConfig(project).then((config) => {
-        if (!(config && config.plugin_config && plugin.plugin_config.tricium)) {
+        if (!(config && config.plugin_config && config.plugin_config.tricium)) {
           console.error(`No config found for tricum for project ${project}.`);
         } else {
           this.triciumHost = config.plugin_config.tricium.triciumHost;
