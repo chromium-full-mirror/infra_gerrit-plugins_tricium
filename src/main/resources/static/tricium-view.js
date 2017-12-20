@@ -22,7 +22,7 @@
     is: 'tricium-view',
 
     properties: {
-      triciumHost: String,
+      baseUrl: String,
       plugin: Object,
       projectName: String,
       change: Object,
@@ -66,16 +66,16 @@
      */
     reload() {
       this._loading = true;
+      window.clearTimeout(this._updateTimeoutID);
+
+      const pluginName = this.plugin.getPluginName();
       const project = this.change.project;
-      return this.$.client.getConfig(project).then((config) => {
-        if (!(config && config.plugin_config && config.plugin_config.tricium)) {
-          console.error(`No config found for tricum for project ${project}.`);
-        } else {
-          this.triciumHost = config.plugin_config.tricium.triciumHost;
-        }
-      }).then(() => {
-        this._refreshProgress().then(() => { this._loading = false; });
-      });
+
+      return this.$.client.getConfig(project, pluginName).then((config) => {
+          this.baseUrl = config.triciumHost;
+        }).then(() => {
+          this._refreshProgress().then(() => { this._loading = false; });
+        });
     },
 
     _handleAuthChange(e) {

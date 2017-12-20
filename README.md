@@ -5,13 +5,13 @@ to display progress of analyzers running via Tricium.
 
 ## Usage
 
-This plugin is configured via the `project.config` file present in the
-repo's `refs/meta/config` ref. This file uses git config format. To
-configure tricium, add a section like:
+This plugin is configured via the `tricium.config` file present in the
+repo's `refs/meta/config` ref. This file uses git config format, and is
+expected to have a "host" section with a "tricium" setting, e.g.
 
 ```
-[plugin "tricium"]
-  triciumHost = tricium-prod.appspot.com
+[host]
+  tricium = tricium-prod.appspot.com
 ```
 
 ## Development
