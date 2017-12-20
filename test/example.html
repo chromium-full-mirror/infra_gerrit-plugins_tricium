@@ -8,7 +8,7 @@ found in the LICENSE file.
 <!-- This should import the same version of Polymer that Gerrit will use. -->
 <link rel="import" href="http://polygit.org/polymer+v1.11.0/components/polymer/polymer.html">
 
-<link rel="import" href="./tricium-view.html">
+<link rel="import" href="../src/main/resources/static/tricium-view.html">
 
 <style>
 /* This style is added here to approximately match style used in PolyGerrit. */
@@ -44,8 +44,25 @@ this file.</p>
 <script>
 'use strict';
 
+const fakePlugin = {
+  restApi() {
+    return {
+      get(url) {
+        return Promise.resolve({});
+      },
+      getLoggedIn() {
+        return Promise.resolve(false);
+      },
+    };
+  },
+  getPluginName() {
+    return 'tricium';
+  },
+};
+
 const view = document.getElementById('view');
-view.baseUrl = 'http://example.com';
+view.triciumHost = 'tricium-dev.appspot.com';
+view.plugin = fakePlugin;
 view._analyzerResults = [
   {
     analyzer: 'GitFileIsolator',
@@ -78,14 +95,16 @@ view._analyzerResults = [
  * and display results for a particular example change and patchset.
  */
 function useExampleChange() {
+  view.$.client.gerritHost = 'chromium-review.googlesource.com';
+  view.$.client.triciumHost = 'tricium-dev.appspot.com';
   view.change = {
-    project: 'playground-gerrit-tricium',
-    id: 'playground%2Fgerrit-tricium~master~Ief88cf9b766cd714f15a136a4ac7a93030616868',
+    project: 'playground/gerrit-tricium',
+    id: 'playground%2Fgerrit-tricium~master~' +
+        'Ie760e62edf1ee7d302677c2acc5dcf1d8761d856',
   };
   view.revision = {
-    ref: 'refs/changes/14/702314/8',
+    ref: 'refs/changes/64/817364/2',
   };
-  view.$.client.baseUrl = 'tricium-dev.appspot.com';
   view._refreshProgress();
 }
 

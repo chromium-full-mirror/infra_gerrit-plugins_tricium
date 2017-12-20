@@ -67,15 +67,19 @@
     reload() {
       this._loading = true;
       window.clearTimeout(this._updateTimeoutID);
-
       const pluginName = this.plugin.getPluginName();
       const project = this.change.project;
-
-      return this.$.client.getConfig(project, pluginName).then((config) => {
-          this.baseUrl = config.triciumHost;
-        }).then(() => {
-          this._refreshProgress().then(() => { this._loading = false; });
-        });
+      const plugin = this.plugin.getPluginName();
+      return this.$.client.getConfig(project, plugin).then((config) => {
+        if (!config) {
+          console.warn(`No config found for ${project}, ${plugin}.`);
+          this.triciumHost = 'tricum-dev.appspot.com';
+        } else {
+          this.triciumHost = config.triciumHost;
+        }
+      }).then(() => {
+        this._refreshProgress().then(() => { this._loading = false; });
+      });
     },
 
     _handleAuthChange(e) {

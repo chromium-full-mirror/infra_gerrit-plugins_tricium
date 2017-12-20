@@ -58,23 +58,16 @@
     },
 
     /**
-     * Fetch the config object for this project.
+     * Fetch the config for this plugin and project.
      *
-     * @param {string} projectName Gerrit project name.
-     * @param {string} pluginName Plugin name.
+     * @param {string} project Gerrit project name.
+     * @param {string} plugin Plugin name.
      * @return {Promise} Resolves to the fetched config object.
      */
-    getConfig(projectName, pluginName) {
-      const configURL = '/projects/' + encodeURIComponent(projectName) + '/' +
-          encodeURIComponent(pluginName) + '~config';
-      const opts = {credentials: 'same-origin'};
-      return fetch(configURL, opts).then((response) => {
-        if (!response.ok) {
-          console.error(response.statusText);
-          return {};
-        }
-        return this._getResponseObject(response);
-      });
+    getConfig(project, plugin) {
+      return this.plugin.restApi().get(
+          `/projects/${encodeURIComponent(project)}` +
+          `/${encodeURIComponent(plugin)}~config`);
     },
 
     /**
@@ -94,6 +87,9 @@
      *     or rejects with an error.
      */
     getProgress(change, revision) {
+      if (!this.triciumHost) {
+        return Promise.reject('Cannot fetch progress, tricium host not set.');
+      }
       const service = 'tricium.Tricium';
       const method = 'Progress';
       const request = {
