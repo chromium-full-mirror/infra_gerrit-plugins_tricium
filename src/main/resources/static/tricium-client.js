@@ -205,7 +205,7 @@
           // https://developers.google.com/api-client-library/javascript/reference/referencedocs
           gapi.load('config_min', resolve);
         }).then(() => {
-          return this.getOAuthConfig_();
+          return this._getOAuthConfig();
         }).then((config) => {
           if (config.hasOwnProperty('auth_url') && config['auth_url']) {
             gapi.config.update('oauth-flow/authUrl', config['auth_url']);
