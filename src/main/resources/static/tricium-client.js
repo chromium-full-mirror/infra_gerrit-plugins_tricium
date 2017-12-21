@@ -23,7 +23,8 @@
      */
 
     properties: {
-      baseUrl: String,
+      triciumHost: String,
+      gerritHost: String,
       plugin: Object,
 
       _sharedAuthState: {
@@ -88,7 +89,7 @@
      */
     getProgress(change, revision) {
       if (!this.triciumHost) {
-        return Promise.reject('Cannot fetch progress, tricium host not set.');
+        return Promise.reject('Cannot fetch Progress, Tricium host not set.');
       }
       const service = 'tricium.Tricium';
       const method = 'Progress';
@@ -98,10 +99,10 @@
             project: change.project,
             change: change.id,
             revision: revision.ref,
-            host: window.location.host,
+            host: this.gerritHost || window.location.host,
         },
       };
-      return this._rpcRequest(this.baseUrl, service, method, request)
+      return this._rpcRequest(this.triciumHost, service, method, request)
           .then((response) => response.analyzerProgress);
     },
 

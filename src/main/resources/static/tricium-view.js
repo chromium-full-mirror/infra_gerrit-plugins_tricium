@@ -22,9 +22,8 @@
     is: 'tricium-view',
 
     properties: {
-      baseUrl: String,
+      triciumHost: String,
       plugin: Object,
-      projectName: String,
       change: Object,
       revision: Object,
 
@@ -66,19 +65,20 @@
      */
     reload() {
       this._loading = true;
-      window.clearTimeout(this._updateTimeoutID);
-      const pluginName = this.plugin.getPluginName();
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
       return this.$.client.getConfig(project, plugin).then((config) => {
-        if (!config) {
-          console.warn(`No config found for ${project}, ${plugin}.`);
-          this.triciumHost = 'tricum-dev.appspot.com';
-        } else {
+        if (config && config.triciumHost) {
           this.triciumHost = config.triciumHost;
+        } else {
+          console.warn(`No config found for project "${project}", ` +
+                       `plugin "${plugin}", not fetching Tricium Progress.`);
         }
-      }).then(() => {
-        this._refreshProgress().then(() => { this._loading = false; });
+        return Boolean(this.triciumHost);
+      }).then((configFound) => {
+        if (configFound) {
+          this._refreshProgress().then(() => { this._loading = false; });
+        }
       });
     },
 
@@ -88,6 +88,9 @@
 
     /**
      * Fetch current progress state and update properties.
+     *
+     * It is assumed that this will only be called if the Tricium
+     * host is configured.
      *
      * @return {Promise} Resolves upon completion.
      */
