@@ -163,7 +163,10 @@
         return response.text().then(
             (text) => Promise.reject(message + '\nBody: ' + text));
       }
-      return this._getResponseObject(response, ')]}\'');
+      const jsonPrefix = ')]}\'';
+      return response.text().then((text) => {
+        return JSON.parse(text.substring(jsonPrefix.length));
+      });
     },
 
      /** @return {?string} The stored OAuth access token. */
@@ -231,23 +234,7 @@
      * @return {Promise} Resolves to a token object.
      */
     _getOAuthConfig() {
-      const authConfigURL = '/accounts/self/oauthconfig';
-      const opts = {
-        headers: new Headers({Accept: 'application/json'}),
-        credentials: 'same-origin',
-      };
-      return fetch(authConfigURL, opts).then((response) => {
-        if (!response.ok) {
-          console.error(response.statusText);
-          if (response.body && response.body.then) {
-            return response.body.then((text) => {
-              return Promise.reject(text);
-            });
-          }
-          return Promise.reject(response.statusText);
-        }
-        return this._getResponseObject(response);
-      });
+      return this.plugin.restApi().get('/accounts/self/oauthconfig');
     },
 
     /**
@@ -291,12 +278,6 @@
             resolve(token);
           }
         });
-      });
-    },
-
-    _getResponseObject(response, jsonPrefix = ')]}\'') {
-      return response.text().then((text) => {
-        return JSON.parse(text.substring(jsonPrefix.length));
       });
     },
   });
