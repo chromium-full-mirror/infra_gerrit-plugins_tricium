@@ -80,6 +80,7 @@ found in the LICENSE file.
 
     setup(() => {
       element = fixture('tricum-client-fixture');
+      element.triciumHost = 'tricium-mock.appspot.com';
       sinon.stub(window, 'fetch');
     });
 
