@@ -24,7 +24,6 @@
 
     properties: {
       triciumHost: String,
-      gerritHost: String,
       plugin: Object,
 
       _sharedAuthState: {
@@ -99,11 +98,23 @@
             project: change.project,
             change: change.id,
             revision: revision.ref,
-            host: this.gerritHost || window.location.host,
+            host: this._getGerritHost(),
         },
       };
       return this._rpcRequest(this.triciumHost, service, method, request)
           .then((response) => response.analyzerProgress);
+    },
+
+    /** @return Gerrit host string to send to Tricium. */
+    _getGerritHost() {
+      // In practice, there are "canary" Gerrit hosts which serve the same
+      // change data as the non-canary version but which may use a newer
+      // version of Gerrit. For convenience, strip the "canary-" part.
+      const host = document.location.host;
+      if (host.startsWith('canary-')) {
+        return host.slice('canary-'.length);
+      }
+      return host;
     },
 
     /**

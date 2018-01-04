@@ -95,7 +95,7 @@ view._analyzerResults = [
  * and display results for a particular example change and patchset.
  */
 function useExampleChange() {
-  view.$.client.gerritHost = 'chromium-review.googlesource.com';
+  view.$.client._getGerritHost = () => 'chromium-review.googlesource.com';
   view.$.client.triciumHost = 'tricium-dev.appspot.com';
   view.change = {
     project: 'playground/gerrit-tricium',
