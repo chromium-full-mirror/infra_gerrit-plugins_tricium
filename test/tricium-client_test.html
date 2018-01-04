@@ -13,7 +13,7 @@ found in the LICENSE file.
 <link rel="import" href="./bower_components/iron-test-helpers/iron-test-helpers.html">
 <link rel="import" href="../src/main/resources/static/tricium-client.html">
 
-<test-fixture id="tricum-client-fixture">
+<test-fixture id="tricium-client-fixture">
   <template>
     <tricium-client></tricium-client>
   </template>
@@ -24,7 +24,7 @@ found in the LICENSE file.
     let element;
 
     setup(() => {
-      element = fixture('tricum-client-fixture');
+      element = fixture('tricium-client-fixture');
     });
 
     teardown(() => {
@@ -79,7 +79,7 @@ found in the LICENSE file.
     };
 
     setup(() => {
-      element = fixture('tricum-client-fixture');
+      element = fixture('tricium-client-fixture');
       element.triciumHost = 'tricium-mock.appspot.com';
       sinon.stub(window, 'fetch');
     });
