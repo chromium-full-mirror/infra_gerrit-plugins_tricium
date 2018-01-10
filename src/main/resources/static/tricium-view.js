@@ -28,7 +28,6 @@
       revision: Object,
 
       _analyzerResults: Array,
-      _email: String,
       _loading: {
         type: Boolean,
         value: false,
@@ -97,19 +96,18 @@
      */
     _refreshProgress() {
       return this.$.client.getOAuthToken().then(() => {
-        return this.$.client.getProgress(this.change, this.revision).then(
-            (allAnalyzers) => {
-              this._updateAnalyzers(allAnalyzers);
-            }
-        ).catch((err) => {
-              this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
-                  (1 + Math.random()) * this._updateIntervalMs * 2);
-              console.error(err);
-            }).then(() => {
-              this._updateTimeoutID =
-                  window.setTimeout(this._updateTimerFired.bind(this),
-                      this._updateIntervalMs);
-            });
+        return this.$.client.getProgress(
+            this.change, this.revision).then((results) => {
+          this._updateAnalyzers(results);
+        }).catch((err) => {
+          this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
+              (1 + Math.random()) * this._updateIntervalMs * 2);
+          console.error(err);
+        }).then(() => {
+          this._updateTimeoutID =
+              window.setTimeout(this._updateTimerFired.bind(this),
+                                this._updateIntervalMs);
+        });
       });
     },
 
@@ -119,12 +117,12 @@
      * The fields in the AnalyzerProgress objects are specified in the
      * Tricium API: See API specification in: https://goo.gl/rA5H1m
      *
-     * @param {AnalyzerProgress[]} allAnalyzers Fetched analyzer progress.
+     * @param {AnalyzerProgress[]} results Fetched analyzer progress.
      */
-    _updateAnalyzers(allAnalyzers) {
+    _updateAnalyzers(results) {
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
-      this._analyzerResults = allAnalyzers;
+      this._analyzerResults = results;
     },
 
     _handleVisibilityChange(e) {
