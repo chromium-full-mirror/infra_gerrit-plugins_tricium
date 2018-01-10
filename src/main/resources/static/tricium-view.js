@@ -65,6 +65,7 @@
      */
     reload() {
       this._loading = true;
+      this._analyzerResults = [];
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
       return this.$.client.getConfig(project, plugin).then((config) => {
