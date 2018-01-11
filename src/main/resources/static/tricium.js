@@ -4,12 +4,14 @@
 
 'use strict';
 
-Gerrit.install((plugin) => {
-  const path = '/static/tricium-view.html';
-  Polymer.Base.importHref(plugin.url(path), () => {
-    plugin.registerCustomComponent('change-view-integration', 'tricium-view');
-  }, (err) => {
-    console.error(`Failed to load tricium-view: ${err}`);
+if (window.Polymer) {
+  Gerrit.install((plugin) => {
+    const path = '/static/tricium-view.html';
+    Polymer.Base.importHref(plugin.url(path), () => {
+      plugin.registerCustomComponent('change-view-integration', 'tricium-view');
+    }, (err) => {
+      console.error(`Failed to load tricium-view: ${err}`);
+    });
   });
-});
+}
 
