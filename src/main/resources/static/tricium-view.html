@@ -34,12 +34,12 @@ found in the LICENSE file.
       .header .update {
         color: rgba(0, 0, 0, .7);
       }
-      .analyzers-section {
+      .functions-section {
         display: flex;
         flex-wrap: wrap;
         padding: 0;
       }
-      .analyzer {
+      .function {
         border: 1px solid #ccc;
         display: flex;
         font-size: .9em;
@@ -49,30 +49,30 @@ found in the LICENSE file.
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .analyzer.pending {
+      .function.pending {
         background-color: #e0e0e0;
       }
-      .analyzer.running {
+      .function.running {
         background-color: #ffeb3b;
       }
-      .analyzer.success {
+      .function.success {
         background-color: #8bc34a;
       }
-      .analyzer.failure {
+      .function.failure {
         background-color: #f44336;
         color: #fff;
       }
-      .analyzer .title {
+      .function .title {
         color: #000;
         text-decoration: none;
       }
-      .analyzer.failure .title {
+      .function.failure .title {
         color: #fff;
       }
-      .analyzer .title:hover {
+      .function .title:hover {
         text-decoration: underline;
       }
-      .analyzer .title::before {
+      .function .title::before {
         background-position: center;
         background-repeat: no-repeat;
         background-size: 12px;
@@ -84,16 +84,16 @@ found in the LICENSE file.
         margin-top: .25em;
         position: absolute;
       }
-      .analyzer.pending .title::before {
+      .function.pending .title::before {
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
       }
-      .analyzer.running .title::before {
+      .function.running .title::before {
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
       }
-      .analyzer.success .title::before {
+      .function.success .title::before {
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/check_black_18dp.png");
       }
-      .analyzer.failure .title::before {
+      .function.failure .title::before {
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/close_black_18dp.png");
       }
     </style>
@@ -101,17 +101,17 @@ found in the LICENSE file.
       <div id="view-container" hidden$="[[_loading]]">
         <div class="header container">
           <div class="container">
-            <h3 class="label">[[_computeTitleText(_analyzerResults)]]</h3>
+            <h3 class="label">[[_computeTitleText(_results)]]</h3>
             <div class="update">[[_computeUpdateText(_lastUpdate)]]</div>
           </div>
         </div>
-        <section class="analyzers-section">
-          <template is="dom-repeat" items="[[_analyzerResults]]" as="result">
-            <div class$="analyzer [[_getAnalyzerClass(result)]]">
+        <section class="functions-section">
+          <template is="dom-repeat" items="[[_results]]" as="result">
+            <div class$="function [[_getFunctionClass(result)]]">
                <a class="title"
-                  aria-label$="[[result.analyzer]] [[_getAnalyzerClass(result)]]"
-                  href$="[[_getAnalyzerUrl(result)]]" target="_blank">
-                  [[result.analyzer]]</a>
+                  aria-label$="[[result.name]] [[_getFunctionClass(result)]]"
+                  href$="[[_getFunctionUrl(result)]]" target="_blank">
+                  [[result.name]]</a>
             </div>
           </template>
         </section>

@@ -8,10 +8,10 @@
   const MAX_UPDATE_INTERVAL_MS = 1000 * 60 * 5;
 
   /**
-   * Enum of possible analyzer states to show.
+   * Enum of possible Tricium function states to show.
    * See the State enum in the Tricium API: https://goo.gl/rA5H1m.
    */
-  const AnalyzerState = {
+  const FunctionState = {
     PENDING: 'pending',
     RUNNING: 'running',
     FAILURE: 'failure',
@@ -27,7 +27,7 @@
       change: Object,
       revision: Object,
 
-      _analyzerResults: Array,
+      _results: Array,
       _loading: {
         type: Boolean,
         value: false,
@@ -58,13 +58,13 @@
     },
 
     /**
-     * Reset the state of the element, then fetch and display analyzer progress.
+     * Reset the state of the element, then fetch and display progress.
      *
      * @return {Promise} Resolves upon completion.
      */
     reload() {
       this._loading = true;
-      this._analyzerResults = [];
+      this._results = [];
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
       return this.$.client.getConfig(project, plugin).then((config) => {
@@ -98,7 +98,7 @@
       return this.$.client.getOAuthToken().then(() => {
         return this.$.client.getProgress(
             this.change, this.revision).then((results) => {
-          this._updateAnalyzers(results);
+          this._update(results);
         }).catch((err) => {
           this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
               (1 + Math.random()) * this._updateIntervalMs * 2);
@@ -114,15 +114,15 @@
     /**
      * Update element state based on the given fetched progress.
      *
-     * The fields in the AnalyzerProgress objects are specified in the
+     * The fields in the FunctionProgress objects are specified in the
      * Tricium API: See API specification in: https://goo.gl/rA5H1m
      *
-     * @param {AnalyzerProgress[]} results Fetched analyzer progress.
+     * @param {FunctionProgress[]} results Fetched results progress.
      */
-    _updateAnalyzers(results) {
+    _update(results) {
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
-      this._analyzerResults = results;
+      this._results = results;
     },
 
     _handleVisibilityChange(e) {
@@ -142,9 +142,9 @@
 
     _computeTitleText(results) {
       if (!results || results.length == 0) {
-        return 'No Analyzers';
+        return 'No Tricium Results';
       }
-      return 'Analyzers';
+      return 'Tricium Results';
     },
 
     _computeUpdateText(lastUpdate) {
@@ -155,17 +155,17 @@
     },
 
     /**
-     * Return a string indicating analyzer state.
+     * Return a string indicating Tricium function state.
      *
-     * @param {AnalyzerProgress} result An object with a "state" property.
-     * @return {string} Analyzer state. May be used as a CSS class name.
+     * @param {FunctionProgress} result An object with a "state" property.
+     * @return {string} Function state. May be used as a CSS class name.
      */
-    _getAnalyzerClass(result) {
-      return AnalyzerState[result.state] || '';
+    _getFunctionClass(result) {
+      return FunctionState[result.state] || '';
     },
 
-    /** Return a URL to view details for a particular analyzer run. */
-    _getAnalyzerUrl(result) {
+    /** Return a URL to view details for a particular function run. */
+    _getFunctionUrl(result) {
       return `${result.swarmingUrl}/task?id=${result.swarmingTaskId}`;
     },
   });

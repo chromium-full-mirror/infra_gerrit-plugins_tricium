@@ -63,27 +63,27 @@ const fakePlugin = {
 const view = document.getElementById('view');
 view.triciumHost = 'tricium-dev.appspot.com';
 view.plugin = fakePlugin;
-view._analyzerResults = [
+view._results = [
   {
-    analyzer: 'GitFileIsolator',
+    name: 'GitFileIsolator',
     swarmingUrl: 'http://example.com',
     swarmingTaskId: '1',
     state: 'SUCCESS',
   },
   {
-    analyzer: 'NotFinished',
+    name: 'NotFinished',
     swarmingUrl: 'http://example.com',
     swarmingTaskId: '2',
     state: 'RUNNING',
   },
   {
-    analyzer: 'NotStarted',
+    name: 'NotStarted',
     swarmingUrl: 'http://example.com',
     swarmingTaskId: '3',
     state: 'PENDING',
   },
   {
-    analyzer: 'Broken',
+    name: 'Broken',
     swarmingUrl: 'http://example.com',
     swarmingTaskId: '4',
     state: 'FAILURE',

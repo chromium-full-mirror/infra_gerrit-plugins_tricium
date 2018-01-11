@@ -93,16 +93,33 @@
       const service = 'tricium.Tricium';
       const method = 'Progress';
       const request = {
-          consumer: 'GERRIT',
-          gerritDetails: {
-            project: change.project,
-            change: change.id,
-            revision: revision.ref,
-            host: this._getGerritHost(),
+        consumer: 'GERRIT',
+        gerritDetails: {
+          project: change.project,
+          change: change.id,
+          revision: revision.ref,
+          host: this._getGerritHost(),
         },
       };
       return this._rpcRequest(this.triciumHost, service, method, request)
-          .then((response) => response.analyzerProgress);
+          .then((response) => this._functionProgress(response));
+    },
+
+    _functionProgress(response) {
+      // The results may be found under different names due to a schema change.
+      // TODO(qyearsley): Simplify this after fully migrating to the new names.
+      let results;
+      if (response.functionProgress) {
+        results = response.functionProgress;
+      } else {
+        results = response.analyzerProgress;
+      }
+      for (const item of results) {
+        if (item.analyzer) {
+          item.name = item.analyzer;
+        }
+      }
+      return results;
     },
 
     /** @return Gerrit host string to send to Tricium. */

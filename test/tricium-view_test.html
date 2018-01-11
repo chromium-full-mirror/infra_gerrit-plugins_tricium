@@ -55,22 +55,22 @@ found in the LICENSE file.
     });
 
     test('_computeTitleText with empty list', () => {
-      assert.equal('No Analyzers', element._computeTitleText([]));
+      assert.equal('No Tricium Results', element._computeTitleText([]));
     });
 
     test('_computeTitleText with non-empty list', () => {
-      assert.equal('Analyzers', element._computeTitleText([{analyzer: 'Hi'}]));
+      assert.equal('Tricium Results', element._computeTitleText([{name: 'Hi'}]));
     });
 
-    test('_getAnalyzerClass with valid states', () => {
-      assert.equal('pending', element._getAnalyzerClass({state: 'PENDING'}));
-      assert.equal('running', element._getAnalyzerClass({state: 'RUNNING'}));
-      assert.equal('success', element._getAnalyzerClass({state: 'SUCCESS'}));
-      assert.equal('failure', element._getAnalyzerClass({state: 'FAILURE'}));
+    test('_getFunctionClass with valid states', () => {
+      assert.equal('pending', element._getFunctionClass({state: 'PENDING'}));
+      assert.equal('running', element._getFunctionClass({state: 'RUNNING'}));
+      assert.equal('success', element._getFunctionClass({state: 'SUCCESS'}));
+      assert.equal('failure', element._getFunctionClass({state: 'FAILURE'}));
     });
 
-    test('_getAnalyzerClass with an invalid state', () => {
-      assert.equal('', element._getAnalyzerClass({state: 'BOGUS'}));
+    test('_getFunctionClass with an invalid state', () => {
+      assert.equal('', element._getFunctionClass({state: 'BOGUS'}));
     });
   });
 </script>

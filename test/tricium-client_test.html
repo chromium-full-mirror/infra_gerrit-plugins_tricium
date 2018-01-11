@@ -97,15 +97,15 @@ found in the LICENSE file.
       const successResponse = {
         runId: '56511',
         state: 'SUCCESS',
-        analyzerProgress: [
+        functionProgress: [
           {
-            analyzer: 'GitFileIsolator',
+            name: 'GitFileIsolator',
             state: 'SUCCESS',
             swarmingUrl: 'https://swarm.example.com',
             swarmingTaskId: '390a',
           },
           {
-            analyzer: 'Spacey',
+            name: 'Spacey',
             state: 'SUCCESS',
             swarmingUrl: 'https://swarm.example.com',
             swarmingTaskId: '390b',
@@ -120,9 +120,9 @@ found in the LICENSE file.
       window.fetch.returns(Promise.resolve(response));
       const promise = element.getProgress(change, revision);
       promise.then((response) => {
-        assert.deepEqual(response, successResponse.analyzerProgress);
+        assert.deepEqual(response, successResponse.functionProgress);
       }).catch((error) => {
-        assert.fail('Promise should not reject.');
+        assert.fail('Promise should not reject, got error:', error);
       });
     });
 
@@ -133,7 +133,7 @@ found in the LICENSE file.
       });
       window.fetch.returns(Promise.resolve(response));
       element.getProgress(change, revision).then((response) => {
-        assert.fail('Promise should reject.');
+        assert.fail('Promise should reject, got response:', response);
       }).catch((error) => {
         assert.equal(error, 'X-Prpc-Grpc-Code: 3\nBody: Invalid Argument');
       });
@@ -145,7 +145,7 @@ found in the LICENSE file.
       });
       window.fetch.returns(Promise.resolve(response));
       element.getProgress(change, revision).then((response) => {
-        assert.fail('Promise should reject.');
+        assert.fail('Promise should reject, got response:', response);
       }).catch((error) => {
         assert.equal(error, 'X-Prpc-Grpc-Code: null\n' +
             'HTTP status: 400\nBody: No pRPC code');
