@@ -25,7 +25,10 @@
       triciumHost: String,
       plugin: Object,
       change: Object,
-      revision: Object,
+      revision: {
+        type: Object,
+        observer: '_refreshProgress',
+      },
 
       _results: Array,
       _loading: {
@@ -151,7 +154,7 @@
       if (!lastUpdate) {
         return '';
       }
-      return `Last updated at ${lastUpdate}`;
+      return `Last updated at ${lastUpdate}.`;
     },
 
     /**
@@ -168,5 +171,13 @@
     _getFunctionUrl(result) {
       return `${result.swarmingUrl}/task?id=${result.swarmingTaskId}`;
     },
+
+    /** Return a string describing the current patchset number. */
+    _computePatchsetDescription(revision) {
+      if (revision && revision._number) {
+        return `Showing results for patchset ${revision._number}.`
+      }
+      return '';
+    }
   });
 })();

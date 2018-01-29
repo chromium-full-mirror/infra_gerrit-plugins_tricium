@@ -6,7 +6,7 @@ found in the LICENSE file.
 <title>Example static tricium-view element</title>
 
 <!-- This should import the same version of Polymer that Gerrit will use. -->
-<link rel="import" href="http://polygit.org/polymer+v1.11.0/components/polymer/polymer.html">
+<link rel="import" href="http://polygit.org/polymer+v1.11.2/components/polymer/polymer.html">
 
 <link rel="import" href="../src/main/resources/static/tricium-view.html">
 
@@ -100,10 +100,11 @@ function useExampleChange() {
   view.change = {
     project: 'playground/gerrit-tricium',
     id: 'playground%2Fgerrit-tricium~master~' +
-        'Ie760e62edf1ee7d302677c2acc5dcf1d8761d856',
+        'I8e47bf64136257d50489936f21a24c86782992e2',
   };
   view.revision = {
-    ref: 'refs/changes/64/817364/2',
+    ref: 'refs/changes/43/881643/6',
+    _number: 6,
   };
   view._refreshProgress();
 }

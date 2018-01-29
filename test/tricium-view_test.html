@@ -46,7 +46,9 @@ found in the LICENSE file.
 
     test('_refreshProgress uses exponential back-off', (done) => {
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
-      sandbox.stub(element.$.client, 'getProgress', () => Promise.reject());
+      sandbox.stub(
+          element.$.client, 'getProgress',
+          () => Promise.reject('simulated getProgress error (expected)'));
       const initialTimeoutMs = element._updateIntervalMs;
       element._refreshProgress().catch(() => {
         assert.isTrue(element._updateIntervalMs > 2 * initialTimeoutMs);
@@ -71,6 +73,23 @@ found in the LICENSE file.
 
     test('_getFunctionClass with an invalid state', () => {
       assert.equal('', element._getFunctionClass({state: 'BOGUS'}));
+    });
+
+    test('_computePatchsetDescription with patchset', () => {
+      element.revision = {
+        description: 'Update from feedback',
+        kind: 'REWORK',
+        _number: 3,
+        ref: 'refs/changes/14/702314/3',
+      };
+      assert.equal(
+          'Showing results for patchset 3.',
+          element._computePatchsetDescription(element.revision));
+
+    });
+
+    test('_computePatchsetDescription without patchset', () => {
+      assert.equal('', element._computePatchsetDescription({}));
     });
   });
 </script>

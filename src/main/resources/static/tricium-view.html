@@ -102,7 +102,10 @@ found in the LICENSE file.
         <div class="header container">
           <div class="container">
             <h3 class="label">[[_computeTitleText(_results)]]</h3>
-            <div class="update">[[_computeUpdateText(_lastUpdate)]]</div>
+            <div class="update">
+                [[_computePatchsetDescription(revision)]]
+                [[_computeUpdateText(_lastUpdate)]]
+            </div>
           </div>
         </div>
         <section class="functions-section">
