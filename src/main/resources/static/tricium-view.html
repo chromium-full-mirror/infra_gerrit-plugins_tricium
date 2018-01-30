@@ -34,6 +34,13 @@ found in the LICENSE file.
       .header .update {
         color: rgba(0, 0, 0, .7);
       }
+      .num-comments-chip {
+        border: #777 1px solid;
+        margin-left: .45em;
+        padding: 0 .2em;
+        background: lightgreen;
+        text-decoration: none;
+      }
       .functions-section {
         display: flex;
         flex-wrap: wrap;
@@ -103,18 +110,25 @@ found in the LICENSE file.
           <div class="container">
             <h3 class="label">[[_computeTitleText(_results)]]</h3>
             <div class="update">
-                [[_computePatchsetDescription(revision)]]
-                [[_computeUpdateText(_lastUpdate)]]
+              [[_computePatchsetDescription(revision)]]
+              [[_computeUpdateText(_lastUpdate)]]
             </div>
           </div>
         </div>
         <section class="functions-section">
           <template is="dom-repeat" items="[[_results]]" as="result">
             <div class$="function [[_getFunctionClass(result)]]">
-               <a class="title"
+              <a class="title"
                   aria-label$="[[result.name]] [[_getFunctionClass(result)]]"
                   href$="[[_getFunctionUrl(result)]]" target="_blank">
-                  [[result.name]]</a>
+                [[result.name]]
+              </a>
+              <span class="num-comments-chip"
+                  hidden$="[[!result.numComments]]"
+                  alt="Produced [[result.numComments]] comments."
+                  title="Produced [[result.numComments]] comments.">
+                [[result.numComments]]
+              </span>
             </div>
           </template>
         </section>
