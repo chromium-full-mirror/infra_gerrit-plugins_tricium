@@ -90,8 +90,6 @@
       if (!this.triciumHost) {
         return Promise.reject('Cannot fetch Progress, Tricium host not set.');
       }
-      const service = 'tricium.Tricium';
-      const method = 'Progress';
       const request = {
         consumer: 'GERRIT',
         gerritDetails: {
@@ -101,7 +99,8 @@
           host: this._getGerritHost(),
         },
       };
-      return this._rpcRequest(this.triciumHost, service, method, request)
+      return this._rpcRequest(
+          this.triciumHost, 'tricium.Tricium', 'Progress', request)
           .then((response) => this._functionProgress(response));
     },
 
@@ -135,6 +134,29 @@
     },
 
     /**
+     * Send a "not useful" Feedback message to the Tricium server.
+     *
+     * @param {RobotCommentInfo} comment The comment to send feedback for.
+     * @return {Promise} Resolves to an object that corresponds to a
+     *     Tricium FeedbackResponse message.
+     */
+    reportNotUseful(comment) {
+      if (!this.triciumHost) {
+        return Promise.reject('Cannot send report, Tricium host not set.');
+      }
+      if (!comment.properties || !comment.properties.tricium_comment_uuid) {
+        return Promise.reject(
+            'No tricium_comment_uuid field in comment.properties: '
+            + JSON.stringify(comment.properties));
+      }
+      const request = {
+        comment_id: comment.properties.tricium_comment_uuid,
+      };
+      return this._rpcRequest(
+          this.triciumHost, 'tricium.Tricium', 'ReportNotUseful', request);
+    },
+
+    /**
      * Make a pRPC request with JSON data to the given service.
      *
      * For more about pRPC, see:
@@ -156,17 +178,17 @@
     _rpcRequest(host, service, method, request) {
       const url = `https://${host}/prpc/${service}/${method}`;
       const headers = new Headers({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       });
       const accessToken = this._getSharedAccessToken();
       if (accessToken) {
         headers.set('Authorization', 'Bearer ' + accessToken);
       }
       const opts = {
-          headers,
-          method: 'POST',
-          body: JSON.stringify(request),
+        headers,
+        method: 'POST',
+        body: JSON.stringify(request),
       };
       return fetch(url, opts).then((response) => {
         return this._handleRpcResponse(response);

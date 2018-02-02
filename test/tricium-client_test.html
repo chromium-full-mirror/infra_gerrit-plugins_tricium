@@ -63,7 +63,6 @@ found in the LICENSE file.
 
   suite('<tricium-client> rpc request behavior', () => {
     let element;
-    let server;
 
     const change = {
       id: 'myProject~master~I3ea943139cb62e86071996f2480e58bf3eeb9dd2',
@@ -78,6 +77,26 @@ found in the LICENSE file.
       subject: 'My Patchset',
     };
 
+    const comment = {
+      id: '8a0b9120_a01440e3',
+      robot_id: 'Hello',
+      robot_run_id: 123412341234,
+      properties: {
+        tricium_comment_uuid: 'f37e05e3-ce3b-475b-a4cd-2cc60814bc69',
+      },
+    };
+
+    function newSuccessResponse(data) {
+      return new window.Response(
+          ')]}\'' + JSON.stringify(data), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Prpc-Grpc-Code': '0',
+            },
+          });
+    }
+
     setup(() => {
       element = fixture('tricium-client-fixture');
       element.triciumHost = 'tricium-mock.appspot.com';
@@ -88,13 +107,8 @@ found in the LICENSE file.
       window.fetch.restore();
     });
 
-    test('getProgress success', () => {
-      const okResponseHeaders = {
-        'Content-Type': 'application/json',
-        'X-Prpc-Grpc-Code': '0',
-      };
-      const prefix = ')]}\'';
-      const successResponse = {
+    test('getProgress with a success response', (done) => {
+      const responseData = {
         runId: '56511',
         state: 'SUCCESS',
         functionProgress: [
@@ -113,20 +127,18 @@ found in the LICENSE file.
           },
         ],
       };
-      const response = new window.Response(prefix + JSON.stringify(successResponse), {
-        status: 200,
-        headers: okResponseHeaders,
-      });
+      const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      const promise = element.getProgress(change, revision);
-      promise.then((response) => {
-        assert.deepEqual(response, successResponse.functionProgress);
+      element.getProgress(change, revision).then((response) => {
+        assert.deepEqual(response, responseData.functionProgress);
+        done();
       }).catch((error) => {
         assert.fail('Promise should not reject, got error:', error);
+        done();
       });
     });
 
-    test('getProgress with error response', () => {
+    test('getProgress with error response', (done) => {
       const response = new window.Response('Invalid Argument', {
         status: 400,
         headers: {'X-Prpc-Grpc-Code': '3'},
@@ -134,23 +146,52 @@ found in the LICENSE file.
       window.fetch.returns(Promise.resolve(response));
       element.getProgress(change, revision).then((response) => {
         assert.fail('Promise should reject, got response:', response);
+        done();
       }).catch((error) => {
         assert.equal(error, 'X-Prpc-Grpc-Code: 3\nBody: Invalid Argument');
+        done();
       });
     });
 
-    test('getProgress with invalid response', () => {
+    test('getProgress with invalid response', (done) => {
       const response = new window.Response('No pRPC code', {
         status: 400,
       });
       window.fetch.returns(Promise.resolve(response));
       element.getProgress(change, revision).then((response) => {
         assert.fail('Promise should reject, got response:', response);
+        done();
       }).catch((error) => {
         assert.equal(error, 'X-Prpc-Grpc-Code: null\n' +
             'HTTP status: 400\nBody: No pRPC code');
+        done();
+      });
+    });
+
+    test('reportNotUseful with valid comment', (done) => {
+      const responseData = {responseField: 123};
+      const response = newSuccessResponse(responseData);
+      window.fetch.returns(Promise.resolve(response));
+      element.reportNotUseful(comment).then((data) => {
+        assert.deepEqual(response, responseData);
+        done();
+      }).catch((error) => {
+        assert.fail('Promise should not reject, got error: ' + error);
+        done();
+      });
+    });
+
+    test('reportNotUseful with invalid empty comment', (done) => {
+      const response = newSuccessResponse({responseField: 123});
+      window.fetch.returns(Promise.resolve(response));
+      element.reportNotUseful({properties: {}}).then((response) => {
+        assert.fail('Promise should reject, got response:', response);
+        done();
+      }).catch((error) => {
+        assert.equal(
+            error, 'No tricium_comment_uuid field in comment.properties: {}');
+        done();
       });
     });
   });
 </script>
-

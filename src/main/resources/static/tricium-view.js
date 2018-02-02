@@ -175,9 +175,9 @@
     /** Return a string describing the current patchset number. */
     _computePatchsetDescription(revision) {
       if (revision && revision._number) {
-        return `Showing results for patchset ${revision._number}.`
+        return `Showing results for patchset ${revision._number}.`;
       }
       return '';
-    }
+    },
   });
 })();
