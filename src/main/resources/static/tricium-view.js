@@ -60,6 +60,16 @@
       this.reload();
     },
 
+    detached() {
+      this._clearUpdateTimeout();
+    },
+
+    _clearUpdateTimeout() {
+      if (this._updateTimeoutID) {
+        window.clearTimeout(this._updateTimeoutID);
+      }
+    },
+
     /**
      * Reset the state of the element, then fetch and display progress.
      *
@@ -107,6 +117,7 @@
               (1 + Math.random()) * this._updateIntervalMs * 2);
           console.error(err);
         }).then(() => {
+          this._clearUpdateTimeout();
           this._updateTimeoutID =
               window.setTimeout(this._updateTimerFired.bind(this),
                                 this._updateIntervalMs);
@@ -123,6 +134,9 @@
      * @param {FunctionProgress[]} results Fetched results progress.
      */
     _update(results) {
+      // TODO(qyearsley): Clear the update timeout for this element
+      // if all results are finished (not pending or started)
+      // because results will certainly not change after that.
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
       this._results = results;
