@@ -75,6 +75,10 @@ found in the LICENSE file.
       assert.equal('', element._getFunctionClass({state: 'BOGUS'}));
     });
 
+    test('_getFunctionClass with no state', () => {
+      assert.equal('pending', element._getFunctionClass({}));
+    });
+
     test('_computePatchsetDescription with patchset', () => {
       assert.equal(
           'Showing results for patchset 3.',

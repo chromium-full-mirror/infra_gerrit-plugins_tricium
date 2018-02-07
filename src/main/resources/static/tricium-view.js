@@ -178,6 +178,9 @@
      * @return {string} Function state. May be used as a CSS class name.
      */
     _getFunctionClass(result) {
+      if (!result.state) {
+        return 'pending';
+      }
       return FunctionState[result.state] || '';
     },
 
