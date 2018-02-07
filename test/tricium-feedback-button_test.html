@@ -55,8 +55,8 @@ found in the LICENSE file.
       assert.isTrue(element.disabled);
     });
 
-    test('reportNotUseful delegates to tricium-view', (done) => {
-      sandbox.stub(element.view.$.client, 'reportNotUseful', (comment) => {
+    test('reportNotUseful delegates to client', (done) => {
+      sandbox.stub(element.$.client, 'reportNotUseful', (comment) => {
         assert.equal(comment, exampleComment);
         return Promise.resolve(exampleResponse);
       });

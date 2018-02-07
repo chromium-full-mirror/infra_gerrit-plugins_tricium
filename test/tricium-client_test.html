@@ -173,7 +173,7 @@ found in the LICENSE file.
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
       element.reportNotUseful(comment).then((data) => {
-        assert.deepEqual(response, responseData);
+        assert.deepEqual(data, responseData);
         done();
       }).catch((error) => {
         assert.fail('Promise should not reject, got error: ' + error);

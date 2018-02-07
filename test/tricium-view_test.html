@@ -76,15 +76,14 @@ found in the LICENSE file.
     });
 
     test('_computePatchsetDescription with patchset', () => {
-      element.revision = {
-        description: 'Update from feedback',
-        kind: 'REWORK',
-        _number: 3,
-        ref: 'refs/changes/14/702314/3',
-      };
       assert.equal(
           'Showing results for patchset 3.',
-          element._computePatchsetDescription(element.revision));
+          element._computePatchsetDescription({
+            description: 'Update from feedback',
+            kind: 'REWORK',
+            _number: 3,
+            ref: 'refs/changes/14/702314/3',
+          }));
     });
 
     test('_computePatchsetDescription without patchset', () => {
