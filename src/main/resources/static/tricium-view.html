@@ -66,15 +66,11 @@ found in the LICENSE file.
         background-color: #8bc34a;
       }
       .function.failure {
-        background-color: #f44336;
-        color: #fff;
+        display: none;
       }
       .function .title {
         color: #000;
         text-decoration: none;
-      }
-      .function.failure .title {
-        color: #fff;
       }
       .function .title:hover {
         text-decoration: underline;
@@ -99,9 +95,6 @@ found in the LICENSE file.
       }
       .function.success .title::before {
         background-image: url("https://www.gstatic.com/images/icons/material/system/1x/check_black_18dp.png");
-      }
-      .function.failure .title::before {
-        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/close_black_18dp.png");
       }
     </style>
     <template is="dom-if" if="[[triciumHost]]">
