@@ -101,24 +101,7 @@
       };
       return this._rpcRequest(
           this.triciumHost, 'tricium.Tricium', 'Progress', request)
-          .then((response) => this._functionProgress(response));
-    },
-
-    _functionProgress(response) {
-      // The results may be found under different names due to a schema change.
-      // TODO(qyearsley): Simplify this after fully migrating to the new names.
-      let results;
-      if (response.functionProgress) {
-        results = response.functionProgress;
-      } else {
-        results = response.analyzerProgress;
-      }
-      for (const item of results) {
-        if (item.analyzer) {
-          item.name = item.analyzer;
-        }
-      }
-      return results;
+          .then((response) => response.functionProgress);
     },
 
     /** @return Gerrit host string to send to Tricium. */
