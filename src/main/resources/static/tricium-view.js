@@ -134,12 +134,32 @@
      * @param {FunctionProgress[]} results Fetched results progress.
      */
     _update(results) {
-      // TODO(qyearsley): Clear the update timeout for this element
-      // if all results are finished (not pending or started)
-      // because results will certainly not change after that.
-      this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
       this._lastUpdate = new Date().toLocaleTimeString();
       this._results = results;
+      if (this._isDone(results)) {
+        // If all analyzers are finished, then results won't change
+        // again for this patch set.
+        this._clearUpdateTimeout();
+        return;
+      }
+      this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
+    },
+
+    /** Check whether the Tricium analyzers are all finished.
+     *
+     * The Tricium workflow is generated all at once before it is started, so
+     * once it is non-empty, we assume that there will be no additional
+     * analyzers in later responses.
+     */
+    _isDone(results) {
+      if (results.length == 0) {
+        return false;
+      }
+      return results.every((r) => {
+        // The state is considered done if it is not pending or running.
+        // It might be canceled, aborted, failed, or finished successfully.
+        return r.state && r.state != 'PENDING' && r.state != 'RUNNING';
+      });
     },
 
     _handleVisibilityChange(e) {

@@ -93,5 +93,62 @@ found in the LICENSE file.
     test('_computePatchsetDescription without patchset', () => {
       assert.equal('', element._computePatchsetDescription({}));
     });
+
+    test('_isDone returns false with empty results', () => {
+      assert.isFalse(element._isDone([]));
+    });
+
+    test('_isDone returns false with unfinished result', () => {
+      assert.isFalse(element._isDone([
+        {
+          name: 'NotStarted',
+          state: 'PENDING',
+        },
+      ]));
+      assert.isFalse(element._isDone([
+        {
+          name: 'NotFinished',
+          swarmingUrl: 'http://example.com',
+          swarmingTaskId: '2',
+          state: 'RUNNING',
+        },
+      ]));
+    });
+
+    test('_isDone returns false with unfinished result', () => {
+      assert.isFalse(element._isDone([
+        {
+          name: 'NotStarted',
+          state: 'PENDING',
+        },
+      ]));
+      assert.isFalse(element._isDone([
+        {
+          name: 'NotFinished',
+          swarmingUrl: 'http://example.com',
+          swarmingTaskId: '2',
+          state: 'RUNNING',
+        },
+      ]));
+    });
+
+    test('_isDone returns true with only finished results', () => {
+      assert.isTrue(element._isDone([
+        {
+          name: 'MyLinter',
+          swarmingUrl: 'http://example.com',
+          swarmingTaskId: '6',
+          state: 'SUCCESS',
+          numComments: 3,
+        },
+        {
+          name: 'MyBrokenLinter',
+          swarmingUrl: 'http://example.com',
+          swarmingTaskId: '6',
+          state: 'FAILURE',
+          numComments: 0,
+        },
+      ]));
+    });
   });
 </script>
