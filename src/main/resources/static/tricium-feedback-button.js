@@ -11,7 +11,6 @@
       triciumHost: String,
       plugin: Object,
       comment: Object,
-      view: Object,
       disabled: {
         type: Boolean,
         value: true,
@@ -24,12 +23,17 @@
         console.warn('tricium-feedback-button attached without comment');
         return;
       }
+      if (!this.comment.robot_run_id) {
+        return;  // Not a robot comment.
+      }
       // The email addresses for the tricium service accounts are
       // tricium-{dev,prod}@appspot.gserviceaccount.com.
       // If this is not a Tricium robot comment, don't show a button.
-      if (!this.comment.author.email.startsWith('tricium-')) {
+      if (!this.comment || !this.comment.author || !this.comment.author.email
+          || !this.comment.author.email.startsWith('tricium-')) {
         return;
       }
+      this.init();
     },
 
     /** Load config and set tricium host name. */

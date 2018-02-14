@@ -20,7 +20,73 @@ found in the LICENSE file.
 </test-fixture>
 
 <script>
-  suite('<tricium-feedback-button>', () => {
+  suite('<tricium-feedback-button> init conditions', () => {
+    let element;
+    let sandbox;
+
+    function makeExampleComment() {
+      return {
+        id: '1234_abcd',
+        robot_run_id: '2345',
+        robot_id: 'Spacey/Mixed',
+        author: {
+          name: 'Tricium',
+          email: 'tricium-dev@appspot.gserviceaccount.com'
+        },
+        properties: {
+          tricium_comment_uuid: 'abcd1234-abcd1234'
+        },
+      };
+    }
+
+    setup(() => {
+      element = fixture('tricium-feedback-button-fixture');
+      element.init = sinon.spy();
+      sandbox = sinon.sandbox.create();
+    });
+
+    test('init is called with valid comment', () => {
+      element.comment = makeExampleComment();
+      element.attached();
+      assert.isTrue(element.init.called);
+    });
+
+    test('init is not called with no comment', () => {
+      element.attached();
+      assert.isFalse(element.init.called);
+    });
+
+    test('init is not called with empty author', () => {
+      element.comment = makeExampleComment();
+      delete element.comment.author;
+      element.attached();
+      assert.isFalse(element.init.called);
+    });
+
+    test('init is not called with non-robot comment', () => {
+      element.comment = makeExampleComment();
+      delete element.comment.robot_run_id;
+      delete element.comment.robot_id;
+      element.attached();
+      assert.isFalse(element.init.called);
+    });
+
+    test('init is not called with non-tricium comment', () => {
+      element.comment = makeExampleComment();
+      element.comment.author = {
+        name: 'Someone',
+        email: 'someone@somewhere'
+      };
+      element.attached();
+      assert.isFalse(element.init.called);
+    });
+
+    teardown(() => {
+      sandbox.restore();
+    });
+  });
+
+  suite('<tricium-feedback-button> report behavior', () => {
     let element;
     let sandbox;
 
@@ -28,8 +94,13 @@ found in the LICENSE file.
       id: '1234_abcd',
       robot_run_id: '2345',
       robot_id: 'Spacey/Mixed',
-      author: {name: 'Tricium'},
-      properties: {tricium_comment_uuid: 'abcd1234-abcd1234'},
+      author: {
+        name: 'Tricium',
+        email: 'tricium-dev@appspot.gserviceaccount.com'
+      },
+      properties: {
+        tricium_comment_uuid: 'abcd1234-abcd1234'
+      },
     };
 
     const exampleResponse = {
@@ -38,21 +109,11 @@ found in the LICENSE file.
 
     setup(() => {
       element = fixture('tricium-feedback-button-fixture');
-      element.view = {
-        $: {client: {reportNotUseful() { throw Error('should be stubbed'); }}},
-      };
       sandbox = sinon.sandbox.create();
     });
 
     teardown(() => {
       sandbox.restore();
-    });
-
-    test('tricium-feedback-button checks comment author', () => {
-      element.comment = {
-        author: {name: 'Tricium (dev)'},
-      };
-      assert.isTrue(element.disabled);
     });
 
     test('reportNotUseful delegates to client', (done) => {
