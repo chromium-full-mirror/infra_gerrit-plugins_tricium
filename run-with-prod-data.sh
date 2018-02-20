@@ -11,24 +11,16 @@ set -eu
 
 readonly SCRIPT_DIR=$(realpath "$(dirname "${0}")")
 readonly GERRIT_DIR=$(realpath "${GERRIT_DIR:-${SCRIPT_DIR}/../..}")
-readonly PLUGIN_DIR=$(mktemp -d)
 readonly GERRIT_HOST="${GERRIT_HOST:-chromium-review.googlesource.com}"
+readonly PLUGIN_PATH=$(realpath --relative-to="$GERRIT_DIR" \
+    "$SCRIPT_DIR/src/main/resources/static/tricium.html")
 
 echo "Using ${SCRIPT_DIR} as Tricium plugin directory."
 echo "Using ${GERRIT_DIR} as Gerrit directory."
-echo "Using ${PLUGIN_DIR} as plugins directory."
 echo "Using ${GERRIT_HOST} as Gerrit host."
-
-function cleanup {
-    echo  "Cleaning up temp dir: $PLUGIN_DIR"
-    rm -r "$PLUGIN_DIR"
-    exit 0
-}
-trap cleanup EXIT
-
-mkdir -p "${PLUGIN_DIR}/tricium/"
-ln -s "${SCRIPT_DIR}/src/main/resources/static" "${PLUGIN_DIR}/tricium/static"
+echo "Using ${PLUGIN_PATH} as path to plugin web UI entry point."
 
 (cd "${GERRIT_DIR}" && \
     polygerrit-ui/run-server.sh \
-    -host "${GERRIT_HOST}" -plugins "${PLUGIN_DIR}")
+    --host "${GERRIT_HOST}" \
+    --plugins="$PLUGIN_PATH")
