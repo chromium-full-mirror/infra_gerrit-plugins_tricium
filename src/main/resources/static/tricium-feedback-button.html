@@ -4,10 +4,15 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+
 <link rel="import" href="./tricium-client.html">
 <dom-module id="tricium-feedback-button">
   <template>
-    <gr-button on-tap="reportNotUseful">Not Useful</gr-button>
+    <gr-button
+        class="action"
+        on-tap="reportNotUseful"
+        disabled$="[[disabled]]"
+        link>Not Useful</gr-button>
     <tricium-client
         id="client"
         tricium-host="[[triciumHost]]"
