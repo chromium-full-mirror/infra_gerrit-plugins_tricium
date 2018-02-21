@@ -27,7 +27,7 @@
       change: Object,
       revision: {
         type: Object,
-        observer: '_refreshProgress',
+        observer: 'reload',
       },
 
       _results: Array,
@@ -53,11 +53,10 @@
 
     attached() {
       this.listen(document, 'visibilitychange', '_handleVisibilityChange');
-      if (!this.change) {
-        console.warn('element attached without change property set.');
+      if (!this.change || !this.revision) {
+        console.warn('element attached without change and revision set.');
         return;
       }
-      this.reload();
     },
 
     detached() {
