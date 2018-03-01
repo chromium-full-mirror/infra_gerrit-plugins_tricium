@@ -129,41 +129,50 @@ found in the LICENSE file.
       };
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).then((response) => {
-        assert.deepEqual(response, responseData.functionProgress);
-        done();
-      }).catch((error) => {
-        assert.fail('Promise should not reject, got error:', error);
+      element.getProgress(change, revision).then((data) => {
+        assert.deepEqual(data, responseData.functionProgress);
         done();
       });
     });
 
-    test('getProgress with error response', (done) => {
+    test('getProgress with invalid argument response', (done) => {
       const response = new window.Response('Invalid Argument', {
         status: 400,
         headers: {'X-Prpc-Grpc-Code': '3'},
       });
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).then((response) => {
-        assert.fail('Promise should reject, got response:', response);
+      element.getProgress(change, revision).catch((message) => {
+        assert.equal(
+            message,
+            'X-Prpc-Grpc-Code: 3\nHTTP status: 400\nBody: Invalid Argument');
         done();
-      }).catch((error) => {
-        assert.equal(error, 'X-Prpc-Grpc-Code: 3\nBody: Invalid Argument');
+      });
+    });
+
+    test('getProgress with not found response', (done) => {
+      // If no progress was found, we don't necessarily want
+      // to treat this as an error case because it may just
+      // not be finished yet.
+      const response = new window.Response('Not found', {
+        status: 404,
+        headers: {'X-Prpc-Grpc-Code': '5'},
+      });
+      window.fetch.returns(Promise.resolve(response));
+      element.getProgress(change, revision).then((data) => {
+        assert.deepEqual(data, {}); // Empty results.
         done();
       });
     });
 
     test('getProgress with invalid response', (done) => {
       const response = new window.Response('No pRPC code', {
-        status: 400,
+        status: 200,
       });
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).then((response) => {
-        assert.fail('Promise should reject, got response:', response);
-        done();
-      }).catch((error) => {
-        assert.equal(error, 'X-Prpc-Grpc-Code: null\n' +
-            'HTTP status: 400\nBody: No pRPC code');
+      element.getProgress(change, revision).catch((message) => {
+        assert.equal(
+            message,
+            'X-Prpc-Grpc-Code: NaN\nHTTP status: 200\nBody: No pRPC code');
         done();
       });
     });
@@ -175,23 +184,63 @@ found in the LICENSE file.
       element.reportNotUseful(comment).then((data) => {
         assert.deepEqual(data, responseData);
         done();
-      }).catch((error) => {
-        assert.fail('Promise should not reject, got error: ' + error);
-        done();
       });
     });
 
     test('reportNotUseful with invalid empty comment', (done) => {
       const response = newSuccessResponse({responseField: 123});
       window.fetch.returns(Promise.resolve(response));
-      element.reportNotUseful({properties: {}}).then((response) => {
-        assert.fail('Promise should reject, got response:', response);
-        done();
-      }).catch((error) => {
+      element.reportNotUseful({properties: {}}).catch((message) => {
         assert.equal(
-            error, 'No tricium_comment_uuid field in comment.properties: {}');
+            message,
+            'No tricium_comment_uuid field in comment.properties: {}');
         done();
       });
+    });
+
+    test('_message describes response contents', (done) => {
+      const successResponse = newSuccessResponse({responseField: 123});
+      element._message(successResponse).then((message) => {
+        assert.equal(
+            message,
+            'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
+            'Body: )]}\'{"responseField":123}');
+        done();
+      });
+    });
+
+    test('_parseRpcJson parses pRPC JSON', (done) => {
+      const response = newSuccessResponse({mydata: 42});
+      element._parseRpcJson(response).then((data) => {
+        assert.deepEqual(data, {mydata: 42});
+        done();
+      });
+    });
+
+    test('_parseRpcJson raises with invalid JSON', (done) => {
+      const response = new window.Response('not valid JSON', {
+        status: 500,
+        headers: {'X-Prpc-Grpc-Code': '1'},
+      });
+      element._parseRpcJson(response).catch((error) => {
+        assert.isDefined(error);
+        done();
+      });
+    });
+
+    test('_rpcCode with an error code present', () => {
+      const response = new window.Response('Invalid Argument', {
+        status: 400,
+        headers: {'X-Prpc-Grpc-Code': '3'},
+      });
+      assert.equal(element._rpcCode(response), 3);
+    });
+
+    test('_rpcCode with missing header', () => {
+      const response = new window.Response('Not pRPC', {
+        status: 200,
+      });
+      assert.isNaN(element._rpcCode(response));
     });
   });
 </script>

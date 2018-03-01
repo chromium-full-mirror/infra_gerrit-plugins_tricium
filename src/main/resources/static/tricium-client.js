@@ -28,7 +28,7 @@
 
       _sharedAuthState: {
         type: Object,
-        value: {  // Intentional to share the object across instances.
+        value: { // Intentional to share the object across instances.
           OAUTH_CLIENT_ID: null,
           OAUTH_CONFIGURED: false,
           OAUTH_EMAIL: null,
@@ -100,28 +100,24 @@
         },
       };
       return this._rpcRequest(
-          this.triciumHost, 'tricium.Tricium', 'Progress', request)
-          .then((response) => response.functionProgress);
-    },
-
-    /** @return Gerrit host string to send to Tricium. */
-    _getGerritHost() {
-      // In practice, there are "canary" Gerrit hosts which serve the same
-      // change data as the non-canary version but which may use a newer
-      // version of Gerrit. For convenience, strip the "canary-" part.
-      const host = document.location.host;
-      if (host.startsWith('canary-')) {
-        return host.slice('canary-'.length);
-      }
-      return host;
+          this.triciumHost, 'tricium.Tricium', 'Progress',
+          request).then((response) => {
+        if (this._isOk(response)) {
+          return this._parseRpcJson(response).then(
+              (obj) => obj.functionProgress);
+        }
+        if (this._isNotFound(response)) {
+          return {};
+        }
+        return this._message(response).then((m) => Promise.reject(m));
+      });
     },
 
     /**
      * Send a "not useful" Feedback message to the Tricium server.
      *
      * @param {RobotCommentInfo} comment The comment to send feedback for.
-     * @return {Promise} Resolves to an object that corresponds to a
-     *     Tricium FeedbackResponse message.
+     * @return {Promise} Resolves if successful, or rejects with error.
      */
     reportNotUseful(comment) {
       if (!this.triciumHost) {
@@ -129,14 +125,53 @@
       }
       if (!comment.properties || !comment.properties.tricium_comment_uuid) {
         return Promise.reject(
-            'No tricium_comment_uuid field in comment.properties: '
-            + JSON.stringify(comment.properties));
+            'No tricium_comment_uuid field in comment.properties: ' +
+            JSON.stringify(comment.properties));
       }
       const request = {
         comment_id: comment.properties.tricium_comment_uuid,
       };
       return this._rpcRequest(
-          this.triciumHost, 'tricium.Tricium', 'ReportNotUseful', request);
+          this.triciumHost, 'tricium.Tricium', 'ReportNotUseful',
+          request).then((response) => {
+        if (this._isOk(response)) {
+          return this._parseRpcJson(response);
+        }
+        return this._message(response).then((m) => Promise.reject(m));
+      });
+    },
+
+    /** Checks if the response indicates that a run wasn't found. */
+    _isNotFound(response) {
+      return this._rpcCode(response) == 5 && response.status == 404;
+    },
+
+    /** Checks if the response indicates an OK response. */
+    _isOk(response) {
+      return this._rpcCode(response) == 0 && response.status == 200;
+    },
+
+    /** @return {number} The RPC code from the response, NaN if absent. */
+    _rpcCode(response) {
+      return parseInt(response.headers.get('X-Prpc-Grpc-Code'), 10);
+    },
+
+    /** @return {Promise} Resolves to parsed object. */
+    _parseRpcJson(response) {
+      const jsonPrefix = ')]}\'';
+      return response.text().then((text) => {
+        return JSON.parse(text.substring(jsonPrefix.length));
+      });
+    },
+
+    /** @return {Promise} Resolves to a description of an RPC response. */
+    _message(response) {
+      const code = this._rpcCode(response);
+      return response.text().then((text) => {
+        return `X-Prpc-Grpc-Code: ${code}\n` +
+            `HTTP status: ${response.status}\n` +
+            `Body: ${text}`;
+      });
     },
 
     /**
@@ -155,8 +190,7 @@
      * @param {string} service Service name, including package name.
      * @param {string} method The RPC method name.
      * @param {Object} request Request message object.
-     * @return {Promise} Resolves to a response message body,
-     *     or rejects with an error.
+     * @return {Promise} Resolves to a fetch Response object.
      */
     _rpcRequest(host, service, method, request) {
       const url = `https://${host}/prpc/${service}/${method}`;
@@ -173,40 +207,26 @@
         method: 'POST',
         body: JSON.stringify(request),
       };
-      return fetch(url, opts).then((response) => {
-        return this._handleRpcResponse(response);
-      });
+      return fetch(url, opts);
     },
 
-    /**
-     * Check and parse a pRPC response.
-     *
-     * @param {Response} response The Response object from a fetch call.
-     * @return {Promise} Resolves to an object with the response message,
-     *     or rejects with an error message.
-     */
-    _handleRpcResponse(response) {
-      const codeHeader = response.headers.get('X-Prpc-Grpc-Code');
-      const codeNumber = parseInt(codeHeader, 10);
-      if (codeNumber !== 0) {
-        let message = 'X-Prpc-Grpc-Code: ' + codeHeader;
-        if (isNaN(codeNumber)) {
-          message += '\nHTTP status: ' + response.status;
-        }
-        return response.text().then(
-            (text) => Promise.reject(message + '\nBody: ' + text));
+    /** @return {string} Gerrit host string to send to Tricium. */
+    _getGerritHost() {
+      // In practice, there are "canary" Gerrit hosts which serve the same
+      // change data as the non-canary version but which may use a newer
+      // version of Gerrit. For convenience, strip the "canary-" part.
+      const host = document.location.host;
+      if (host.startsWith('canary-')) {
+        return host.slice('canary-'.length);
       }
-      const jsonPrefix = ')]}\'';
-      return response.text().then((text) => {
-        return JSON.parse(text.substring(jsonPrefix.length));
-      });
+      return host;
     },
 
-     /** @return {?string} The stored OAuth access token. */
+    /** @return {?string} The stored OAuth access token. */
     _getSharedAccessToken() {
       const token = this._sharedAuthState[OAUTH_TOKEN];
       if (!token) {
-          return null;
+        return null;
       }
       return token['access_token'];
     },
