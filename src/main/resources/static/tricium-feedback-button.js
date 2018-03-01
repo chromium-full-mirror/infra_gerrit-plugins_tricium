@@ -7,6 +7,12 @@
   Polymer({
     is: 'tricium-feedback-button',
 
+    /**
+     * Fired when the "report not useful" request fails.
+     *
+     * @event show-alert
+     */
+
     properties: {
       triciumHost: String,
       plugin: Object,
@@ -14,6 +20,10 @@
       disabled: {
         type: Boolean,
         value: true,
+      },
+      buttonText: {
+        type: String,
+        value: 'Not useful',
       },
     },
 
@@ -73,7 +83,18 @@
         console.warn('reportNotUseful called on disabled tricium-feedback-button');
         return Promise.reject();
       }
-      return this.$.client.reportNotUseful(this.comment);
+      this.disabled = true;
+      return this.$.client.reportNotUseful(this.comment).then((response) => {
+        this.buttonText = 'Reported not useful';
+        return response;
+      }).catch((error) => {
+        this.dispatchEvent(new CustomEvent('show-alert', {
+          detail: {message: 'Failed to report not useful'},
+          bubbles: true,
+        }));
+        this.disabled = false;
+        return Promise.reject();
+      });
     },
   });
 })();
