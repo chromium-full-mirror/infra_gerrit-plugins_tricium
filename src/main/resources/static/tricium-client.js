@@ -83,8 +83,10 @@
      *
      * @param {ChangeInfo} change The current CL.
      * @param {RevisionInfo} revision The current patchset.
-     * @return {Promise} Resolves to a list of AnalyzerProgress objects,
-     *     or rejects with an error.
+     * @return {Promise} If there is a successful response from
+     *     Tricium, this resolves to an Array of of FunctionProgress
+     *     objects; if Tricium returns 404, this resolves with an
+     *     empty Array; else it rejects with an error message.
      */
     getProgress(change, revision) {
       if (!this.triciumHost) {
@@ -107,7 +109,7 @@
               (obj) => obj.functionProgress);
         }
         if (this._isNotFound(response)) {
-          return {};
+          return [];
         }
         return this._message(response).then((m) => Promise.reject(m));
       });
