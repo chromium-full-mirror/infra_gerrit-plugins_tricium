@@ -8,6 +8,11 @@ found in the LICENSE file.
 <link rel="import" href="./tricium-client.html">
 <dom-module id="tricium-feedback-button">
   <template>
+    <style>
+      gr-button {
+        --gr-button-color: #212121;
+      }
+    </style>
     <gr-button
         class="action"
         on-tap="reportNotUseful"
