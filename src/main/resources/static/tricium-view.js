@@ -83,7 +83,9 @@
         return Boolean(this.triciumHost);
       }).then((configFound) => {
         if (configFound) {
-          this._refreshProgress().then(() => { this._loading = false; });
+          this._update().then(() => {
+            this._loading = false;
+          });
         }
       });
     },
@@ -103,11 +105,11 @@
      *
      * @return {Promise} Resolves upon completion.
      */
-    _refreshProgress() {
+    _update() {
       return this.$.client.getOAuthToken().then(() => {
         return this.$.client.getProgress(
             this.change, this.revision).then((results) => {
-          this._update(results);
+          this._updateState(results);
         }).catch((err) => {
           this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
               (1 + Math.random()) * this._updateIntervalMs * 2);
@@ -126,7 +128,7 @@
      *
      * @param {FunctionProgress[]} results Fetched results.
      */
-    _update(results) {
+    _updateState(results) {
       this._lastUpdate = new Date().toLocaleTimeString();
       this._results = results;
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
@@ -137,7 +139,7 @@
       this._clearUpdateTimeout();
       // If all analyzers are finished, then results won't change
       // again for this patch set.
-      if (this._isDone(this._results)) {
+      if (this._isDone()) {
         return;
       }
       this._updateTimeoutID = window.setTimeout(
@@ -162,11 +164,11 @@
      * @param {FunctionProgress[]} results Fetched results.
      * @return {Promise} Resolves upon completion.
      */
-    _isDone(results) {
-      if (!results || results.length == 0) {
+    _isDone() {
+      if (!this._results || this._results.length == 0) {
         return false;
       }
-      return results.every((r) => {
+      return this._results.every((r) => {
         // The state is considered done if it is not pending or running.
         // It might be canceled, aborted, failed, or finished successfully.
         return r.state && r.state != 'PENDING' && r.state != 'RUNNING';
@@ -175,7 +177,7 @@
 
     _handleVisibilityChange(e) {
       if (!document.hidden && this._needsUpdate) {
-        this._refreshProgress();
+        this._update();
         this._needsUpdate = false;
       }
     },
@@ -185,7 +187,7 @@
         this._needsUpdate = true;
         return;
       }
-      this._refreshProgress();
+      this._update();
     },
 
     _computeTitleText(results) {

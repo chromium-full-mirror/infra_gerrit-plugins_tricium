@@ -44,38 +44,38 @@ found in the LICENSE file.
       assert.isFalse(element._loggedIn);
     });
 
-    test('_refreshProgress sets timeout when not done', (done) => {
+    test('_update sets timeout when not done', (done) => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
           () => Promise.resolve([{name: 'MyLinter', state: 'PENDING'}]));
-      element._refreshProgress().then(() => {
+      element._update().then(() => {
         assert.isDefined(element._updateTimeoutID);
         done();
       });
     });
 
-    test('_refreshProgress clears timeout when done', (done) => {
+    test('_update clears timeout when done', (done) => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
           () => Promise.resolve([{name: 'MyLinter', state: 'SUCCESS'}]));
-      element._refreshProgress().then(() => {
+      element._update().then(() => {
         assert.isNotOk(element._updateTimeoutID);
         done();
       });
     });
 
-    test('_refreshProgress uses exponential back-off on error', (done) => {
+    test('_update uses exponential back-off on error', (done) => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
           () => Promise.reject('simulated getProgress error (expected)'));
       const initialTimeoutMs = element._updateIntervalMs;
-      element._refreshProgress().then((err) => {
+      element._update().then((err) => {
         assert.isTrue(element._updateIntervalMs > 2 * initialTimeoutMs);
         assert.isOk(element._updateTimeoutID);
         done();
@@ -121,45 +121,50 @@ found in the LICENSE file.
     });
 
     test('_isDone returns false with empty results', () => {
-      assert.isFalse(element._isDone([]));
+      element._results = [];
+      assert.isFalse(element._isDone());
     });
 
     test('_isDone returns false with unfinished result', () => {
-      assert.isFalse(element._isDone([
+      element._results = [
         {
           name: 'NotStarted',
           state: 'PENDING',
         },
-      ]));
-      assert.isFalse(element._isDone([
+      ];
+      assert.isFalse(element._isDone());
+      element._results = [
         {
           name: 'NotFinished',
           swarmingUrl: 'http://example.com',
           swarmingTaskId: '2',
           state: 'RUNNING',
         },
-      ]));
+      ];
+      assert.isFalse(element._isDone());
     });
 
     test('_isDone returns false with unfinished result', () => {
-      assert.isFalse(element._isDone([
+      element._results = [
         {
           name: 'NotStarted',
           state: 'PENDING',
         },
-      ]));
-      assert.isFalse(element._isDone([
+      ];
+      assert.isFalse(element._isDone());
+      element._results = [
         {
           name: 'NotFinished',
           swarmingUrl: 'http://example.com',
           swarmingTaskId: '2',
           state: 'RUNNING',
         },
-      ]));
+      ];
+      assert.isFalse(element._isDone());
     });
 
     test('_isDone returns true with only finished results', () => {
-      assert.isTrue(element._isDone([
+      element._results = [
         {
           name: 'MyLinter',
           swarmingUrl: 'http://example.com',
@@ -174,7 +179,8 @@ found in the LICENSE file.
           state: 'FAILURE',
           numComments: 0,
         },
-      ]));
+      ];
+      assert.isTrue(element._isDone());
     });
   });
 </script>
