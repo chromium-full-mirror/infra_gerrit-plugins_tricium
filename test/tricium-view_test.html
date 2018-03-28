@@ -44,14 +44,40 @@ found in the LICENSE file.
       assert.isFalse(element._loggedIn);
     });
 
-    test('_refreshProgress uses exponential back-off', (done) => {
+    test('_refreshProgress sets timeout when not done', (done) => {
+      assert.isNotOk(element._updateTimeoutID);
+      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
+      sandbox.stub(
+          element.$.client, 'getProgress',
+          () => Promise.resolve([{name: 'MyLinter', state: 'PENDING'}]));
+      element._refreshProgress().then(() => {
+        assert.isDefined(element._updateTimeoutID);
+        done();
+      });
+    });
+
+    test('_refreshProgress clears timeout when done', (done) => {
+      assert.isNotOk(element._updateTimeoutID);
+      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
+      sandbox.stub(
+          element.$.client, 'getProgress',
+          () => Promise.resolve([{name: 'MyLinter', state: 'SUCCESS'}]));
+      element._refreshProgress().then(() => {
+        assert.isNotOk(element._updateTimeoutID);
+        done();
+      });
+    });
+
+    test('_refreshProgress uses exponential back-off on error', (done) => {
+      assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
           () => Promise.reject('simulated getProgress error (expected)'));
       const initialTimeoutMs = element._updateIntervalMs;
-      element._refreshProgress().catch(() => {
+      element._refreshProgress().then((err) => {
         assert.isTrue(element._updateIntervalMs > 2 * initialTimeoutMs);
+        assert.isOk(element._updateTimeoutID);
         done();
       });
     });

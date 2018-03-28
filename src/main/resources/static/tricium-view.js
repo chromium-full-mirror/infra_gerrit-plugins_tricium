@@ -63,12 +63,6 @@
       this._clearUpdateTimeout();
     },
 
-    _clearUpdateTimeout() {
-      if (this._updateTimeoutID) {
-        window.clearTimeout(this._updateTimeoutID);
-      }
-    },
-
     /**
      * Reset the state of the element, then fetch and display progress.
      *
@@ -101,6 +95,9 @@
     /**
      * Fetch current progress state and update properties.
      *
+     * If not all Tricium analyzers are finished yet, this will
+     * set a timeout to update again later.
+     *
      * It is assumed that this will only be called if the Tricium
      * host is configured.
      *
@@ -114,12 +111,9 @@
         }).catch((err) => {
           this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
               (1 + Math.random()) * this._updateIntervalMs * 2);
-          console.error(err);
+          console.warn(err);
         }).then(() => {
-          this._clearUpdateTimeout();
-          this._updateTimeoutID =
-              window.setTimeout(this._updateTimerFired.bind(this),
-                                this._updateIntervalMs);
+          this._resetTimeout();
         });
       });
     },
@@ -135,16 +129,31 @@
     _update(results) {
       this._lastUpdate = new Date().toLocaleTimeString();
       this._results = results;
-      if (this._isDone(results)) {
-        // If all analyzers are finished, then results won't change
-        // again for this patch set.
-        this._clearUpdateTimeout();
-        return;
-      }
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
     },
 
-    /** Check whether the Tricium analyzers are all finished.
+    /** Set a timeout to update again if applicable. */
+    _resetTimeout() {
+      this._clearUpdateTimeout();
+      // If all analyzers are finished, then results won't change
+      // again for this patch set.
+      if (this._isDone(this._results)) {
+        return;
+      }
+      this._updateTimeoutID = window.setTimeout(
+          this._updateTimeoutFired.bind(this),
+          this._updateIntervalMs);
+    },
+
+    _clearUpdateTimeout() {
+      if (this._updateTimeoutID) {
+        window.clearTimeout(this._updateTimeoutID);
+        this._updateTimeoutID = null;
+      }
+    },
+
+    /**
+     * Check whether the Tricium analyzers are all finished.
      *
      * The Tricium workflow is generated all at once before it is started, so
      * once it is non-empty, we assume that there will be no additional
@@ -154,7 +163,7 @@
      * @return {Promise} Resolves upon completion.
      */
     _isDone(results) {
-      if (results.length == 0) {
+      if (!results || results.length == 0) {
         return false;
       }
       return results.every((r) => {
@@ -171,7 +180,7 @@
       }
     },
 
-    _updateTimerFired() {
+    _updateTimeoutFired() {
       if (document.hidden) {
         this._needsUpdate = true;
         return;
