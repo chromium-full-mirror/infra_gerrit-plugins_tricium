@@ -6,12 +6,6 @@
 
   const EMAIL_SCOPE = 'email';
 
-  // Shared state keys.
-  const OAUTH_CLIENT_ID = 'oauth_client_id';
-  const OAUTH_CONFIGURED = 'oauth_configured';
-  const OAUTH_EMAIL = 'oauth_email';
-  const OAUTH_TOKEN = 'oauth_token';
-
   Polymer({
     is: 'tricium-client',
 
@@ -26,15 +20,10 @@
       triciumHost: String,
       plugin: Object,
 
-      _sharedAuthState: {
-        type: Object,
-        value: { // Intentional to share the object across instances.
-          OAUTH_CLIENT_ID: null,
-          OAUTH_CONFIGURED: false,
-          OAUTH_EMAIL: null,
-          OAUTH_TOKEN: null,
-        },
-      },
+      _oauthClientId: String,
+      _oauthConfigured: Boolean,
+      _oauthEmail: String,
+      _oauthToken: Object,
     },
 
     /**
@@ -43,13 +32,13 @@
      * @return {Promise} Resolves when finished.
      */
     getOAuthToken() {
-      if (this._oauthTokenIsValid(this._sharedAuthState[OAUTH_TOKEN])) {
+      if (this._oauthTokenIsValid(this._oauthToken)) {
         return Promise.resolve();
       }
 
       return this._configureOAuthLibrary().then(() => {
         return this._refreshToken().then((token) => {
-          this._sharedAuthState[OAUTH_TOKEN] = token;
+          this._oauthToken = token;
           this.fire('auth-change', {loggedIn: this._oauthTokenIsValid(token)});
         }).catch((err) => {
           this.fire('auth-change', {loggedIn: false});
@@ -226,11 +215,10 @@
 
     /** @return {?string} The stored OAuth access token. */
     _getSharedAccessToken() {
-      const token = this._sharedAuthState[OAUTH_TOKEN];
-      if (!token) {
+      if (!this._oauthToken) {
         return null;
       }
-      return token['access_token'];
+      return this._oauthToken.access_token;
     },
 
     /**
@@ -247,7 +235,7 @@
       return this.plugin.restApi().getLoggedIn().then((loggedIn) => {
         // No need to configure OAuth if no user is logged in, or if it's
         // already configured.
-        if (!loggedIn || this._sharedAuthState[OAUTH_CONFIGURED]) {
+        if (!loggedIn || this._oauthConfigured) {
           return Promise.resolve();
         }
 
@@ -262,23 +250,23 @@
         }).then(() => {
           return this._getOAuthConfig();
         }).then((config) => {
-          if (config.hasOwnProperty('auth_url') && config['auth_url']) {
-            gapi.config.update('oauth-flow/authUrl', config['auth_url']);
+          if (config.hasOwnProperty('auth_url') && config.auth_url) {
+            gapi.config.update('oauth-flow/authUrl', config.auth_url);
           }
-          if (config.hasOwnProperty('proxy_url') && config['proxy_url']) {
-            gapi.config.update('oauth-flow/proxyUrl', config['proxy_url']);
+          if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
+            gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
           }
-          this._sharedAuthState[OAUTH_CLIENT_ID] = config['client_id'];
-          this._sharedAuthState[OAUTH_EMAIL] = config['email'];
+          this._oauthClientId = config.client_id;
+          this._oauthEmail = config.email;
           return new Promise((resolve) => {
             // Loading auth has a side-effect. The URLs should be set before
             // loading it.
             gapi.load('auth', () => { gapi.auth.init(resolve); });
           });
         }).then(() => {
-          this._sharedAuthState[OAUTH_CONFIGURED] = true;
+          this._oauthConfigured = true;
         }).catch(() => {
-          this._sharedAuthState[OAUTH_CONFIGURED] = false;
+          this._oauthConfigured = false;
         });
       });
     },
@@ -301,10 +289,16 @@
      * @return {boolean} True if valid.
      */
     _oauthTokenIsValid(token) {
-      if (!token) { return false; }
-      if (!token['access_token'] || !token['expires_at']) { return false; }
-      const expiration = new Date(parseInt(token['expires_at'], 10) * 1000);
-      if (Date.now() >= expiration) { return false; }
+      if (!token) {
+        return false;
+      }
+      if (!token.access_token || !token.expires_at) {
+        return false;
+      }
+      const expiration = new Date(parseInt(token.expires_at, 10) * 1000);
+      if (Date.now() >= expiration) {
+        return false;
+      }
       return true;
     },
 
@@ -318,17 +312,17 @@
      */
     _refreshToken() {
       const opts = {
-        client_id: this._sharedAuthState[OAUTH_CLIENT_ID],
+        client_id: this._oauthClientId,
+        login_hint: this._oauthEmail,
         immediate: true,
         scope: EMAIL_SCOPE,
-        login_hint: this._sharedAuthState[OAUTH_EMAIL],
       };
       return new Promise((resolve, reject) => {
         gapi.auth.authorize(opts, (token) => {
           if (!token) {
             reject('No token returned');
-          } else if (token['error']) {
-            reject(token['error']);
+          } else if (token.error) {
+            reject(token.error);
           } else {
             resolve(token);
           }
