@@ -22,12 +22,21 @@ found in the LICENSE file.
 <script>
   suite('<tricium-client> oauth-related behavior', () => {
     let element;
+    let sandbox;
 
     setup(() => {
       element = fixture('tricium-client-fixture');
+      sandbox = sinon.sandbox.create();
+      sandbox.stub(window, 'gapi', {
+        auth: {
+          init: () => { throw Error('should be stubbed'); },
+          authorize: () => { throw Error('should be stubbed'); },
+        },
+      });
     });
 
     teardown(() => {
+      sandbox.restore();
     });
 
     function nowSeconds() {
@@ -58,6 +67,36 @@ found in the LICENSE file.
       assert.isFalse(element._oauthTokenIsValid(null));
       assert.isFalse(element._oauthTokenIsValid(undefined));
       assert.isFalse(element._oauthTokenIsValid({access_token: 'foo'}));
+    });
+
+    test('_refreshToken resolves when authorize gives token', (done) => {
+      const token = {access_token: 'test_access_token'};
+      sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
+        callback(token);
+      });
+      element._refreshToken(100).then((value) => {
+        assert.deepEqual(value, token);
+        done();
+      });
+    });
+
+    test('_refreshToken rejects when authorize gives error', (done) => {
+      const token = {error: 'could not authorize'};
+      sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
+        callback(token);
+      });
+      element._refreshToken(100).catch(() => {
+        done();
+      });
+    });
+
+    test('_refreshToken rejects when authorize times out', (done) => {
+      // In this test, we make it so that authorize never resolves,
+      // and the timeout is made smaller so that the test completes faster.
+      sandbox.stub(window.gapi.auth, 'authorize', () => new Promise(() => {}));
+      element._refreshToken(0).catch(() => {
+        done();
+      });
     });
   });
 
@@ -159,7 +198,7 @@ found in the LICENSE file.
       });
       window.fetch.returns(Promise.resolve(response));
       element.getProgress(change, revision).then((data) => {
-        assert.deepEqual(data, []) // Empty results Array.
+        assert.deepEqual(data, []); // Empty results Array.
         done();
       });
     });

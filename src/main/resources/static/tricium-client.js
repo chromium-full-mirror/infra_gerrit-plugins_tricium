@@ -41,6 +41,7 @@
           this._oauthToken = token;
           this.fire('auth-change', {loggedIn: this._oauthTokenIsValid(token)});
         }).catch((err) => {
+          console.warn('Failed to get refresh token; error:', err);
           this.fire('auth-change', {loggedIn: false});
         });
       });
@@ -192,6 +193,8 @@
       const accessToken = this._getSharedAccessToken();
       if (accessToken) {
         headers.set('Authorization', 'Bearer ' + accessToken);
+      } else {
+        console.log(`Making request to ${url} with no bearer token.`);
       }
       const opts = {
         headers,
@@ -308,9 +311,12 @@
      * This requires gapi.auth to be configured first with
      * _configureOAuthLibrary().
      *
-     * @return {Promise} Resolves to a token object.
+     * @param {Number} timeoutMs Milliseconds before timeout,
+     *     can be specified in unit tests.
+     * @return {Promise} Resolves to a token object, or rejects
+     *     if there was an error or no token, or a time-out.
      */
-    _refreshToken() {
+    _refreshToken(timeoutMs = 1000) {
       const opts = {
         client_id: this._oauthClientId,
         login_hint: this._oauthEmail,
@@ -318,7 +324,9 @@
         scope: EMAIL_SCOPE,
       };
       return new Promise((resolve, reject) => {
+        const timeout = setTimeout(reject, timeoutMs);
         gapi.auth.authorize(opts, (token) => {
+          clearTimeout(timeout);
           if (!token) {
             reject('No token returned');
           } else if (token.error) {
