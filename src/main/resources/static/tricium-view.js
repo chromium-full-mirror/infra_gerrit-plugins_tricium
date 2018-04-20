@@ -32,6 +32,9 @@
 
       _results: Array,
       _loading: {
+        // TODO(qyearsley): This is used as a flag to decide whether
+        // to hide the view, and it may be kept as true forever.
+        // To reflect its usage, this could be renamed to `hidden`.
         type: Boolean,
         value: false,
       },
@@ -68,26 +71,22 @@
      *
      * @return {Promise} Resolves upon completion.
      */
-    reload() {
+    async reload() {
       this._loading = true;
       this._results = [];
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
-      return this.$.client.getConfig(project, plugin).then((config) => {
-        if (config && config.triciumHost) {
-          this.triciumHost = config.triciumHost;
-        } else {
-          console.warn(`No config found for project "${project}", ` +
-                       `plugin "${plugin}", not fetching Tricium Progress.`);
-        }
-        return Boolean(this.triciumHost);
-      }).then((configFound) => {
-        if (configFound) {
-          this._update().then(() => {
-            this._loading = false;
-          });
-        }
-      });
+      const config = await this.$.client.getConfig(project, plugin);
+      if (config && config.triciumHost) {
+        this.triciumHost = config.triciumHost;
+      } else {
+        console.warn(`No config found for project "${project}", ` +
+                     `plugin "${plugin}", not fetching Tricium Progress.`);
+      }
+      if (this.triciumHost) {
+        await this._update();
+        this._loading = false;
+      }
     },
 
     _handleAuthChange(e) {
@@ -105,19 +104,19 @@
      *
      * @return {Promise} Resolves upon completion.
      */
-    _update() {
-      return this.$.client.getOAuthToken().then(() => {
-        return this.$.client.getProgress(
-            this.change, this.revision).then((results) => {
-          this._updateState(results);
-        }).catch((err) => {
-          this._updateIntervalMs = Math.min(MAX_UPDATE_INTERVAL_MS,
-              (1 + Math.random()) * this._updateIntervalMs * 2);
-          console.warn(err);
-        }).then(() => {
-          this._resetTimeout();
-        });
-      });
+    async _update() {
+      await this.$.client.getOAuthToken();
+      try {
+        const results = await this.$.client.getProgress(
+            this.change, this.revision);
+        this._updateState(results);
+      } catch (err) {
+        this._updateIntervalMs = Math.min(
+            MAX_UPDATE_INTERVAL_MS,
+            (1 + Math.random()) * this._updateIntervalMs * 2);
+        console.warn(err);
+      }
+      this._resetTimeout();
     },
 
     /**
@@ -162,7 +161,7 @@
      * analyzers in later responses.
      *
      * @param {FunctionProgress[]} results Fetched results.
-     * @return {Promise} Resolves upon completion.
+     * @return {Boolean} True if the Tricium run is finished, false otherwise.
      */
     _isDone() {
       if (!this._results || this._results.length == 0) {

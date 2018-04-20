@@ -31,20 +31,21 @@
      *
      * @return {Promise} Resolves when finished.
      */
-    getOAuthToken() {
+    async getOAuthToken() {
       if (this._oauthTokenIsValid(this._oauthToken)) {
-        return Promise.resolve();
+        return;
       }
 
-      return this._configureOAuthLibrary().then(() => {
-        return this._refreshToken().then((token) => {
-          this._oauthToken = token;
-          this.fire('auth-change', {loggedIn: this._oauthTokenIsValid(token)});
-        }).catch((err) => {
-          console.warn('Failed to get refresh token; error:', err);
-          this.fire('auth-change', {loggedIn: false});
+      await this._configureOAuthLibrary();
+      try {
+        this._oauthToken = await this._refreshToken();
+        this.fire('auth-change', {
+          loggedIn: this._oauthTokenIsValid(this._oauthToken),
         });
-      });
+      } catch (err) {
+        console.warn('Failed to get refresh token; error:', err);
+        this.fire('auth-change', {loggedIn: false});
+      }
     },
 
     /**
@@ -52,10 +53,11 @@
      *
      * @param {string} project Gerrit project name.
      * @param {string} plugin Plugin name.
-     * @return {Promise} Resolves to the fetched config object.
+     * @return {Promise} Resolves to the fetched config object,
+     *     or rejects if the response is non-OK.
      */
-    getConfig(project, plugin) {
-      return this.plugin.restApi().get(
+    async getConfig(project, plugin) {
+      return await this.plugin.restApi().get(
           `/projects/${encodeURIComponent(project)}` +
           `/${encodeURIComponent(plugin)}~config`);
     },
@@ -78,9 +80,9 @@
      *     objects; if Tricium returns 404, this resolves with an
      *     empty Array; else it rejects with an error message.
      */
-    getProgress(change, revision) {
+    async getProgress(change, revision) {
       if (!this.triciumHost) {
-        return Promise.reject('Cannot fetch Progress, Tricium host not set.');
+        throw Error('Cannot fetch Progress, Tricium host not set.');
       }
       const request = {
         consumer: 'GERRIT',
@@ -91,18 +93,16 @@
           host: this._getGerritHost(),
         },
       };
-      return this._rpcRequest(
-          this.triciumHost, 'tricium.Tricium', 'Progress',
-          request).then((response) => {
-        if (this._isOk(response)) {
-          return this._parseRpcJson(response).then(
-              (obj) => obj.functionProgress);
-        }
-        if (this._isNotFound(response)) {
-          return [];
-        }
-        return this._message(response).then((m) => Promise.reject(m));
-      });
+      const response = await this._rpcRequest(
+          this.triciumHost, 'tricium.Tricium', 'Progress', request);
+      if (this._isOk(response)) {
+        const obj = await this._parseRpcJson(response);
+        return obj.functionProgress;
+      }
+      if (this._isNotFound(response)) {
+        return [];
+      }
+      throw await this._message(response);
     },
 
     /**
@@ -111,26 +111,24 @@
      * @param {RobotCommentInfo} comment The comment to send feedback for.
      * @return {Promise} Resolves if successful, or rejects with error.
      */
-    reportNotUseful(comment) {
+    async reportNotUseful(comment) {
       if (!this.triciumHost) {
-        return Promise.reject('Cannot send report, Tricium host not set.');
+        throw Error('Cannot send report, Tricium host not set.');
       }
       if (!comment.properties || !comment.properties.tricium_comment_uuid) {
-        return Promise.reject(
-            'No tricium_comment_uuid field in comment.properties: ' +
-            JSON.stringify(comment.properties));
+        throw Error(
+          'No tricium_comment_uuid field in comment.properties: ' +
+          JSON.stringify(comment.properties));
       }
       const request = {
         comment_id: comment.properties.tricium_comment_uuid,
       };
-      return this._rpcRequest(
-          this.triciumHost, 'tricium.Tricium', 'ReportNotUseful',
-          request).then((response) => {
-        if (this._isOk(response)) {
-          return this._parseRpcJson(response);
-        }
-        return this._message(response).then((m) => Promise.reject(m));
-      });
+      const response = await this._rpcRequest(
+          this.triciumHost, 'tricium.Tricium', 'ReportNotUseful', request);
+      if (this._isOk(response)) {
+        return await this._parseRpcJson(response);
+      }
+      throw Error(await this._message(response));
     },
 
     /** Checks if the response indicates that a run wasn't found. */
@@ -149,21 +147,19 @@
     },
 
     /** @return {Promise} Resolves to parsed object. */
-    _parseRpcJson(response) {
+    async _parseRpcJson(response) {
       const jsonPrefix = ')]}\'';
-      return response.text().then((text) => {
-        return JSON.parse(text.substring(jsonPrefix.length));
-      });
+      const text = await response.text();
+      return JSON.parse(text.substring(jsonPrefix.length));
     },
 
     /** @return {Promise} Resolves to a description of an RPC response. */
-    _message(response) {
+    async _message(response) {
       const code = this._rpcCode(response);
-      return response.text().then((text) => {
-        return `X-Prpc-Grpc-Code: ${code}\n` +
-            `HTTP status: ${response.status}\n` +
-            `Body: ${text}`;
-      });
+      const text = await response.text();
+      return `X-Prpc-Grpc-Code: ${code}\n` +
+          `HTTP status: ${response.status}\n` +
+          `Body: ${text}`;
     },
 
     /**
@@ -184,7 +180,7 @@
      * @param {Object} request Request message object.
      * @return {Promise} Resolves to a fetch Response object.
      */
-    _rpcRequest(host, service, method, request) {
+    async _rpcRequest(host, service, method, request) {
       const url = `https://${host}/prpc/${service}/${method}`;
       const headers = new Headers({
         'Content-Type': 'application/json',
@@ -201,7 +197,7 @@
         method: 'POST',
         body: JSON.stringify(request),
       };
-      return fetch(url, opts);
+      return await fetch(url, opts);
     },
 
     /** @return {string} Gerrit host string to send to Tricium. */
@@ -234,44 +230,44 @@
      *
      * @return {Promise} Resolves upon completion.
      */
-    _configureOAuthLibrary() {
-      return this.plugin.restApi().getLoggedIn().then((loggedIn) => {
-        // No need to configure OAuth if no user is logged in, or if it's
-        // already configured.
-        if (!loggedIn || this._oauthConfigured) {
-          return Promise.resolve();
-        }
+    async _configureOAuthLibrary() {
+      const loggedIn = await this.plugin.restApi().getLoggedIn();
+      // No need to configure OAuth if no user is logged in, or if it's
+      // already configured.
+      if (!loggedIn || this._oauthConfigured) {
+        return;
+      }
 
-        return new Promise((resolve) => {
-          // gapi library shares state between clients, so if this library is
-          // already used by another plugin, there may be unexpected results.
-          // TODO(qyearsley): Check whether gapi is already configured, and if
-          // so log a message and do nothing.
-          // More about gapi:
-          // https://developers.google.com/api-client-library/javascript/reference/referencedocs
-          gapi.load('config_min', resolve);
-        }).then(() => {
-          return this._getOAuthConfig();
-        }).then((config) => {
-          if (config.hasOwnProperty('auth_url') && config.auth_url) {
-            gapi.config.update('oauth-flow/authUrl', config.auth_url);
-          }
-          if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
-            gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
-          }
-          this._oauthClientId = config.client_id;
-          this._oauthEmail = config.email;
-          return new Promise((resolve) => {
-            // Loading auth has a side-effect. The URLs should be set before
-            // loading it.
-            gapi.load('auth', () => { gapi.auth.init(resolve); });
-          });
-        }).then(() => {
-          this._oauthConfigured = true;
-        }).catch(() => {
-          this._oauthConfigured = false;
-        });
+      await new Promise((resolve) => {
+        // gapi library shares state between clients, so if this library is
+        // already used by another plugin, there may be unexpected results.
+        // TODO(qyearsley): Check whether gapi is already configured, and if
+        // so log a message and do nothing.
+        // More about gapi:
+        // https://developers.google.com/api-client-library/javascript/reference/referencedocs
+        gapi.load('config_min', resolve);
       });
+      const config = await this._getOAuthConfig();
+
+      if (config.hasOwnProperty('auth_url') && config.auth_url) {
+        gapi.config.update('oauth-flow/authUrl', config.auth_url);
+      }
+      if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
+        gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
+      }
+      this._oauthClientId = config.client_id;
+      this._oauthEmail = config.email;
+
+      try {
+        await new Promise((resolve) => {
+          // Loading auth has a side-effect. The URLs should be set before
+          // loading it.
+          gapi.load('auth', () => { gapi.auth.init(resolve); });
+        });
+        this._oauthConfigured = true;
+      } catch (err) {
+        this._oauthConfigured = false;
+      }
     },
 
     /**
@@ -279,8 +275,8 @@
      *
      * @return {Promise} Resolves to a token object.
      */
-    _getOAuthConfig() {
-      return this.plugin.restApi().get('/accounts/self/oauthconfig');
+    async _getOAuthConfig() {
+      return await this.plugin.restApi().get('/accounts/self/oauthconfig');
     },
 
     /**
@@ -316,14 +312,14 @@
      * @return {Promise} Resolves to a token object, or rejects
      *     if there was an error or no token, or a time-out.
      */
-    _refreshToken(timeoutMs = 1000) {
+    async _refreshToken(timeoutMs = 1000) {
       const opts = {
         client_id: this._oauthClientId,
         login_hint: this._oauthEmail,
         immediate: true,
         scope: EMAIL_SCOPE,
       };
-      return new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         const timeout = setTimeout(reject, timeoutMs);
         gapi.auth.authorize(opts, (token) => {
           clearTimeout(timeout);

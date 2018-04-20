@@ -34,7 +34,7 @@
         return;
       }
       if (!this.comment.robot_run_id) {
-        return;  // Not a robot comment.
+        return; // Not a robot comment.
       }
       // The email addresses for the tricium service accounts are
       // tricium-{dev,prod}@appspot.gserviceaccount.com.
@@ -78,23 +78,24 @@
     },
 
     /** Report to the tricium server that this comment was not useful. */
-    reportNotUseful() {
+    async reportNotUseful() {
       if (this.disabled) {
-        console.warn('reportNotUseful called on disabled tricium-feedback-button');
+        console.warn('reportNotUseful called on disabled button');
         return Promise.reject();
       }
       this.disabled = true;
-      return this.$.client.reportNotUseful(this.comment).then((response) => {
+      try {
+        const response = await this.$.client.reportNotUseful(this.comment);
         this.buttonText = 'Reported not useful';
         return response;
-      }).catch((error) => {
+      } catch (err) {
         this.dispatchEvent(new CustomEvent('show-alert', {
           detail: {message: 'Failed to report not useful'},
           bubbles: true,
         }));
         this.disabled = false;
         return Promise.reject();
-      });
+      }
     },
   });
 })();
