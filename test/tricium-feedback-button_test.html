@@ -31,10 +31,10 @@ found in the LICENSE file.
         robot_id: 'Spacey/Mixed',
         author: {
           name: 'Tricium',
-          email: 'tricium-dev@appspot.gserviceaccount.com'
+          email: 'tricium-dev@appspot.gserviceaccount.com',
         },
         properties: {
-          tricium_comment_uuid: 'abcd1234-abcd1234'
+          tricium_comment_uuid: 'abcd1234-abcd1234',
         },
       };
     }
@@ -75,7 +75,7 @@ found in the LICENSE file.
       element.comment = makeExampleComment();
       element.comment.author = {
         name: 'Someone',
-        email: 'someone@somewhere'
+        email: 'someone@somewhere',
       };
       element.attached();
       assert.isFalse(element.init.called);
@@ -90,20 +90,20 @@ found in the LICENSE file.
     let element;
     let sandbox;
 
-    const exampleComment = {
+    const exampleComment = Object.freeze({
       id: '1234_abcd',
       robot_run_id: '2345',
       robot_id: 'Spacey/Mixed',
       author: {
         name: 'Tricium',
-        email: 'tricium-dev@appspot.gserviceaccount.com'
+        email: 'tricium-dev@appspot.gserviceaccount.com',
       },
       properties: {
-        tricium_comment_uuid: 'abcd1234-abcd1234'
+        tricium_comment_uuid: 'abcd1234-abcd1234',
       },
-    };
+    });
 
-    const exampleResponse = {};
+    const exampleResponse = Object.freeze({responseContent: 123});
 
     setup(() => {
       element = fixture('tricium-feedback-button-fixture');
@@ -114,53 +114,47 @@ found in the LICENSE file.
       sandbox.restore();
     });
 
-    test('reportNotUseful delegates to client', (done) => {
-      sandbox.stub(element.$.client, 'reportNotUseful', (comment) => {
+    test('reportNotUseful delegates to client', async () => {
+      sandbox.stub(element.$.client, 'reportNotUseful', async (comment) => {
         assert.equal(comment, exampleComment);
-        return Promise.resolve(exampleResponse);
+        return exampleResponse;
       });
       element.comment = exampleComment;
       element.disabled = false;
-      element.reportNotUseful().then((response) => {
-        assert.equal(response, exampleResponse);
-        done();
-      }).catch((err) => {
-        done(err);
-      });
+      const response = await element.reportNotUseful();
+      assert.equal(response, exampleResponse);
     });
 
-    test('reportNotUseful with success response disables button', (done) => {
-      sandbox.stub(element.$.client, 'reportNotUseful', (comment) => {
-        return Promise.resolve(exampleResponse);
+    test('reportNotUseful with success, button disabled', async () => {
+      sandbox.stub(element.$.client, 'reportNotUseful', async (comment) => {
+        return exampleResponse;
       });
       element.comment = exampleComment;
       element.disabled = false;
-      element.reportNotUseful().then((response) => {
-        assert.equal(response, exampleResponse);
-        assert.equal(element.buttonText, 'Reported not useful');
-        assert.isTrue(element.disabled);
-        done();
-      }).catch((err) => {
-        done(err);
-      });
+      const response = await element.reportNotUseful();
+      assert.equal(response, exampleResponse);
+      assert.equal(element.buttonText, 'Reported not useful');
+      assert.isTrue(element.disabled);
     });
 
-    test('reportNotUseful with failure response keeps button enabled', (done) => {
-      sandbox.stub(element.$.client, 'reportNotUseful', (comment) => {
-        return Promise.reject('some error');
+    test('reportNotUseful with failure, button stays enabled', async () => {
+      sandbox.stub(element.$.client, 'reportNotUseful', async (comment) => {
+        throw Error('some error');
       });
       element.comment = exampleComment;
       element.disabled = false;
+      let alertFired = false;
       element.addEventListener('show-alert', (e) => {
         assert.equal(e.detail.message, 'Failed to report not useful');
-        done();
-      })
-      element.reportNotUseful().then((response) => {
-        assert.fail('The promise is supposed to reject.');
-        done();
-      }).catch((err) => {
-        assert.isFalse(element.disabled);
+        alertFired = true;
       });
+      try {
+        await element.reportNotUseful();
+        assert.fail('got no exception', 'expected exception');
+      } catch (error) {
+        assert.isFalse(element.disabled);
+        assert.isTrue(alertFired);
+      }
     });
   });
 </script>

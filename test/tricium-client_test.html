@@ -20,6 +20,18 @@ found in the LICENSE file.
 </test-fixture>
 
 <script>
+
+  async function assertRejects(promise, expectedReason = null) {
+    try {
+      await promise();
+      assert.fail('exception', 'no exception');
+    } catch (actualReason) {
+      if (expectedReason) {
+        assert.deepEqual(actualReason, expectedReason);
+      }
+    }
+  }
+
   suite('<tricium-client> oauth-related behavior', () => {
     let element;
     let sandbox;
@@ -69,34 +81,28 @@ found in the LICENSE file.
       assert.isFalse(element._oauthTokenIsValid({access_token: 'foo'}));
     });
 
-    test('_refreshToken resolves when authorize gives token', (done) => {
+    test('_refreshToken resolves when authorize gives token', async () => {
       const token = {access_token: 'test_access_token'};
       sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
         callback(token);
       });
-      element._refreshToken(100).then((value) => {
-        assert.deepEqual(value, token);
-        done();
-      });
+      const value = await element._refreshToken(100);
+      assert.deepEqual(value, token);
     });
 
-    test('_refreshToken rejects when authorize gives error', (done) => {
+    test('_refreshToken rejects when authorize gives error', async () => {
       const token = {error: 'could not authorize'};
       sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
         callback(token);
       });
-      element._refreshToken(100).catch(() => {
-        done();
-      });
+      assertRejects(async () => await element._refreshToken(100));
     });
 
-    test('_refreshToken rejects when authorize times out', (done) => {
+    test('_refreshToken rejects when authorize times out', async () => {
       // In this test, we make it so that authorize never resolves,
       // and the timeout is made smaller so that the test completes faster.
       sandbox.stub(window.gapi.auth, 'authorize', () => new Promise(() => {}));
-      element._refreshToken(0).catch(() => {
-        done();
-      });
+      assertRejects(async () => await element._refreshToken(0));
     });
   });
 
@@ -126,14 +132,13 @@ found in the LICENSE file.
     };
 
     function newSuccessResponse(data) {
-      return new window.Response(
-          ')]}\'' + JSON.stringify(data), {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Prpc-Grpc-Code': '0',
-            },
-          });
+      return new window.Response(')]}\'' + JSON.stringify(data), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Prpc-Grpc-Code': '0',
+        },
+      });
     }
 
     setup(() => {
@@ -146,7 +151,7 @@ found in the LICENSE file.
       window.fetch.restore();
     });
 
-    test('getProgress with a success response', (done) => {
+    test('getProgress with a success response', async () => {
       const responseData = {
         runId: '56511',
         state: 'SUCCESS',
@@ -168,27 +173,23 @@ found in the LICENSE file.
       };
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).then((data) => {
-        assert.deepEqual(data, responseData.functionProgress);
-        done();
-      });
+      const data = await element.getProgress(change, revision);
+      assert.deepEqual(data, responseData.functionProgress);
     });
 
-    test('getProgress with invalid argument response', (done) => {
+    test('getProgress with invalid argument response', async () => {
       const response = new window.Response('Invalid Argument', {
         status: 400,
         headers: {'X-Prpc-Grpc-Code': '3'},
       });
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).catch((message) => {
-        assert.equal(
-            message,
-            'X-Prpc-Grpc-Code: 3\nHTTP status: 400\nBody: Invalid Argument');
-        done();
-      });
+      assertRejects(
+          async () => element.getProgress(change, revision),
+          'X-Prpc-Grpc-Code: 3\nHTTP status: 400\nBody: Invalid Argument');
     });
 
-    test('getProgress with not found response', (done) => {
+
+    test('getProgress with not found response', async () => {
       // If no progress was found, we don't necessarily want
       // to treat this as an error case because it may just
       // not be finished yet.
@@ -197,74 +198,57 @@ found in the LICENSE file.
         headers: {'X-Prpc-Grpc-Code': '5'},
       });
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).then((data) => {
-        assert.deepEqual(data, []); // Empty results Array.
-        done();
-      });
+      const data = await element.getProgress(change, revision);
+      assert.deepEqual(data, []); // Empty results Array.
     });
 
-    test('getProgress with invalid response', (done) => {
+    test('getProgress with invalid response', async () => {
       const response = new window.Response('No pRPC code', {
         status: 200,
       });
       window.fetch.returns(Promise.resolve(response));
-      element.getProgress(change, revision).catch((message) => {
-        assert.equal(
-            message,
-            'X-Prpc-Grpc-Code: NaN\nHTTP status: 200\nBody: No pRPC code');
-        done();
-      });
+      assertRejects(
+          async () => await element.getProgress(change, revision),
+          'X-Prpc-Grpc-Code: NaN\nHTTP status: 200\nBody: No pRPC code');
     });
 
-    test('reportNotUseful with valid comment', (done) => {
+    test('reportNotUseful with valid comment', async () => {
       const responseData = {responseField: 123};
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      element.reportNotUseful(comment).then((data) => {
-        assert.deepEqual(data, responseData);
-        done();
-      });
+      const data = await element.reportNotUseful(comment);
+      assert.deepEqual(data, responseData);
     });
 
-    test('reportNotUseful with invalid empty comment', (done) => {
+    test('reportNotUseful with invalid empty comment', async () => {
       const response = newSuccessResponse({responseField: 123});
       window.fetch.returns(Promise.resolve(response));
-      element.reportNotUseful({properties: {}}).catch((message) => {
-        assert.equal(
-            message,
-            'No tricium_comment_uuid field in comment.properties: {}');
-        done();
-      });
+      assertRejects(
+          async () => await element.reportNotUseful({properties: {}}),
+          'No tricium_comment_uuid field in comment.properties: {}');
     });
 
-    test('_message describes response contents', (done) => {
+    test('_message describes response contents', async () => {
       const successResponse = newSuccessResponse({responseField: 123});
-      element._message(successResponse).then((message) => {
-        assert.equal(
-            message,
-            'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
-            'Body: )]}\'{"responseField":123}');
-        done();
-      });
+      const message = await element._message(successResponse);
+      assert.equal(
+          message,
+          'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
+          'Body: )]}\'{"responseField":123}');
     });
 
-    test('_parseRpcJson parses pRPC JSON', (done) => {
+    test('_parseRpcJson parses pRPC JSON', async () => {
       const response = newSuccessResponse({mydata: 42});
-      element._parseRpcJson(response).then((data) => {
-        assert.deepEqual(data, {mydata: 42});
-        done();
-      });
+      const data = await element._parseRpcJson(response);
+      assert.deepEqual(data, {mydata: 42});
     });
 
-    test('_parseRpcJson raises with invalid JSON', (done) => {
+    test('_parseRpcJson raises with invalid JSON', async () => {
       const response = new window.Response('not valid JSON', {
         status: 500,
         headers: {'X-Prpc-Grpc-Code': '1'},
       });
-      element._parseRpcJson(response).catch((error) => {
-        assert.isDefined(error);
-        done();
-      });
+      assertRejects(async () => await element._parseRpcJson(response));
     });
 
     test('_rpcCode with an error code present', () => {
