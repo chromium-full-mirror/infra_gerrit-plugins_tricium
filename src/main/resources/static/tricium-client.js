@@ -85,12 +85,11 @@
         throw Error('Cannot fetch Progress, Tricium host not set.');
       }
       const request = {
-        consumer: 'GERRIT',
-        gerritDetails: {
+        gerritRevision: {
+          host: this._getGerritHost(),
           project: change.project,
           change: change.id,
-          revision: revision.ref,
-          host: this._getGerritHost(),
+          gitRef: revision.ref,
         },
       };
       const response = await this._rpcRequest(
