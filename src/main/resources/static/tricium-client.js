@@ -20,10 +20,16 @@
       triciumHost: String,
       plugin: Object,
 
-      _oauthClientId: String,
-      _oauthConfigured: Boolean,
-      _oauthEmail: String,
-      _oauthToken: Object,
+      // The auth state could potentially be re-used for multiple instances
+      // of this element on the same page, e.g. for both tricium-view and
+      // tricium-feedback-button.
+      _sharedAuthState: {
+        type: Object,
+        value: {
+          config: null,
+          token: null,
+        },
+      },
     },
 
     /**
@@ -32,16 +38,18 @@
      * @return {Promise} Resolves when finished.
      */
     async getOAuthToken() {
-      if (this._oauthTokenIsValid(this._oauthToken)) {
+      if (this._oauthTokenIsValid(this._sharedAuthState.token)) {
         return;
       }
 
       await this._configureOAuthLibrary();
       try {
-        this._oauthToken = await this._refreshToken();
-        this.fire('auth-change', {
-          loggedIn: this._oauthTokenIsValid(this._oauthToken),
-        });
+        const token = await this._refreshToken();
+        if (!this._oauthTokenIsValid(token)) {
+          throw Error('Received an invalid token.');
+        }
+        this._sharedAuthState.token = token;
+        this.fire('auth-change', {loggedIn: true});
       } catch (err) {
         console.warn('Failed to get refresh token; error:', err);
         this.fire('auth-change', {loggedIn: false});
@@ -213,10 +221,11 @@
 
     /** @return {?string} The stored OAuth access token. */
     _getSharedAccessToken() {
-      if (!this._oauthToken) {
+      const token = this._sharedAuthState.token;
+      if (!token) {
         return null;
       }
-      return this._oauthToken.access_token;
+      return token.access_token;
     },
 
     /**
@@ -233,7 +242,7 @@
       const loggedIn = await this.plugin.restApi().getLoggedIn();
       // No need to configure OAuth if no user is logged in, or if it's
       // already configured.
-      if (!loggedIn || this._oauthConfigured) {
+      if (!loggedIn || this._sharedAuthState.config) {
         return;
       }
 
@@ -254,8 +263,7 @@
       if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
         gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
       }
-      this._oauthClientId = config.client_id;
-      this._oauthEmail = config.email;
+      this._sharedAuthState.config = config;
 
       try {
         await new Promise((resolve) => {
@@ -263,9 +271,8 @@
           // loading it.
           gapi.load('auth', () => { gapi.auth.init(resolve); });
         });
-        this._oauthConfigured = true;
       } catch (err) {
-        this._oauthConfigured = false;
+        this._sharedAuthState.config = null;
       }
     },
 
@@ -312,9 +319,12 @@
      *     if there was an error or no token, or a time-out.
      */
     async _refreshToken(timeoutMs = 1000) {
+      if (!this._sharedAuthState.config) {
+        throw Error('Trying to refresh token when OAuth is not configured.')
+      }
       const opts = {
-        client_id: this._oauthClientId,
-        login_hint: this._oauthEmail,
+        client_id: this._sharedAuthState.config.client_id,
+        login_hint: this._sharedAuthState.config.email,
         immediate: true,
         scope: EMAIL_SCOPE,
       };

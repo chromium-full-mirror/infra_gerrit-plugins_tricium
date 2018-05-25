@@ -82,7 +82,16 @@ found in the LICENSE file.
     });
 
     test('_refreshToken resolves when authorize gives token', async () => {
-      const token = {access_token: 'test_access_token'};
+      const token = {
+        access_token: 'test_access_token',
+        expires_at: (nowSeconds() + 3600) + '',
+      };
+      element._sharedAuthState = {
+        config: {
+          client_id: 'test_client_id',
+          email: 'johndoe@example.com',
+        },
+      };
       sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
         callback(token);
       });
