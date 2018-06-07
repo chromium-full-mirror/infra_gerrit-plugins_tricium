@@ -11,11 +11,19 @@ found in the LICENSE file.
 <link rel="import" href="../src/main/resources/static/tricium-view.html">
 
 <style>
-/* This style is added here to approximately match style used in PolyGerrit. */
+/*
+ * This plugin uses some CSS variables in order to be consistent with the
+ * PolyGerrit UI; some values are defined here to approximately match
+ * PolyGerrit, but these aren't guaranteed to be the values in practice.
+ */
 :root {
   --default-horizontal-margin: 1rem;
   --font-family: 'Roboto', sans-serif;
   --font-family-bold: 'Roboto Medium', sans-serif;
+  --table-header-background-color: #fafafa;
+  --border-color: #ddd;
+  --primary-text-color: #000;
+  --deemphasized-text-color: rgba(0, 0, 0, .7);
 }
 body {
   height: 100%;

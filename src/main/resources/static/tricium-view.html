@@ -10,7 +10,6 @@ found in the LICENSE file.
     <style>
       #view-container {
         display: block;
-        margin: 1em 0;
       }
       .container {
         align-items: center;
@@ -18,12 +17,12 @@ found in the LICENSE file.
         flex-wrap: wrap;
       }
       .header {
-        background-color: #fafafa;
+        background-color: var(--table-header-background-color);
         justify-content: space-between;
         min-height: 3.2em;
         padding: .5em var(--default-horizontal-margin, 1rem);
-        border-top: 1px solid #ddd;
-        border-bottom: 1px solid #ddd;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
       }
       .header .label {
         font: inherit;
@@ -32,10 +31,10 @@ found in the LICENSE file.
         margin-right: 1em;
       }
       .header .update {
-        color: rgba(0, 0, 0, .7);
+        color: var(--deemphasized-text-color);
       }
       .num-comments-chip {
-        border: #777 1px solid;
+        border: 1px solid var(--border-color);
         margin-left: .45em;
         padding: 0 .2em;
         background: lightgreen;
@@ -47,7 +46,7 @@ found in the LICENSE file.
         padding: 0;
       }
       .function {
-        border: 1px solid #ccc;
+        border: 1px solid var(--border-color);
         display: flex;
         font-size: .9em;
         margin: 0.5em;
@@ -69,7 +68,7 @@ found in the LICENSE file.
         display: none;
       }
       .function .title {
-        color: #000;
+        color: var(--primary-text-color);
         text-decoration: none;
       }
       .function .title:hover {

@@ -22,5 +22,5 @@ echo "Using ${PLUGIN_PATH} as path to plugin web UI entry point."
 
 (cd "${GERRIT_DIR}" && \
     polygerrit-ui/run-server.sh \
-    --host "${GERRIT_HOST}" \
+    --host="${GERRIT_HOST}" \
     --plugins="$PLUGIN_PATH")
