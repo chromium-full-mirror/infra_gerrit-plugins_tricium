@@ -87,6 +87,7 @@
       try {
         const response = await this.$.client.reportNotUseful(this.comment);
         this.buttonText = 'Reported not useful';
+        this.$.buglink.hidden = false;
         return response;
       } catch (err) {
         this.dispatchEvent(new CustomEvent('show-alert', {
