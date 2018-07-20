@@ -246,6 +246,8 @@
         return;
       }
 
+      const gapi = window.gapi;
+
       await new Promise((resolve) => {
         // gapi library shares state between clients, so if this library is
         // already used by another plugin, there may be unexpected results.
@@ -330,7 +332,7 @@
       };
       return await new Promise((resolve, reject) => {
         const timeout = setTimeout(reject, timeoutMs);
-        gapi.auth.authorize(opts, (token) => {
+        window.gapi.auth.authorize(opts, (token) => {
           clearTimeout(timeout);
           if (!token) {
             reject('No token returned');

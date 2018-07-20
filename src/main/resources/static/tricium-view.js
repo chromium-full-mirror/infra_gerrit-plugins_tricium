@@ -125,7 +125,7 @@
      * The fields in the FunctionProgress objects are specified in the
      * Tricium API: See API specification in: https://goo.gl/rA5H1m
      *
-     * @param {FunctionProgress[]} results Fetched results.
+     * @param {Array<FunctionProgress>} results Fetched results.
      */
     _updateState(results) {
       this._lastUpdate = new Date().toLocaleTimeString();
@@ -160,7 +160,7 @@
      * once it is non-empty, we assume that there will be no additional
      * analyzers in later responses.
      *
-     * @param {FunctionProgress[]} results Fetched results.
+     * @param {Array<FunctionProgress>} results Fetched results.
      * @return {Boolean} True if the Tricium run is finished, false otherwise.
      */
     _isDone() {

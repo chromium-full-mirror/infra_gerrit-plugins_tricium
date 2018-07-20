@@ -7,15 +7,17 @@ found in the LICENSE file.
 <link rel="import" href="tricium-view.html">
 <link rel="import" href="tricium-feedback-button.html">
 <script>
-'use strict';
+(function() {
+  'use strict';
 
-Gerrit.install((plugin) => {
-  if (!window.Polymer) { return; } // Only supported in PolyGerrit.
+  Gerrit.install((plugin) => {
+    if (!window.Polymer) { return; } // Only supported in PolyGerrit.
 
-  plugin.registerCustomComponent(
-      'change-view-integration', 'tricium-view');
+    plugin.registerCustomComponent(
+        'change-view-integration', 'tricium-view');
 
-  plugin.registerCustomComponent(
-      'robot-comment-controls', 'tricium-feedback-button');
-});
+    plugin.registerCustomComponent(
+        'robot-comment-controls', 'tricium-feedback-button');
+  });
+})();
 </script>
