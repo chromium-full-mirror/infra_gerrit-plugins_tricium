@@ -31,10 +31,7 @@
       },
 
       _results: Array,
-      _loading: {
-        // TODO(qyearsley): This is used as a flag to decide whether
-        // to hide the view, and it may be kept as true forever.
-        // To reflect its usage, this could be renamed to `hidden`.
+      _hidden: {
         type: Boolean,
         value: false,
       },
@@ -72,7 +69,7 @@
      * @return {Promise} Resolves upon completion.
      */
     async reload() {
-      this._loading = true;
+      this._hidden = true;
       this._results = [];
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
@@ -85,7 +82,7 @@
       }
       if (this.triciumHost) {
         await this._update();
-        this._loading = false;
+        this._hidden = false;
       }
     },
 
