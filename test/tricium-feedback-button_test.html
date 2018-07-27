@@ -29,6 +29,7 @@ found in the LICENSE file.
         id: '1234_abcd',
         robot_run_id: '2345',
         robot_id: 'Spacey/Mixed',
+        message: 'mixed whitespace',
         author: {
           name: 'Tricium',
           email: 'tricium-dev@appspot.gserviceaccount.com',
@@ -155,6 +156,30 @@ found in the LICENSE file.
         assert.isFalse(element.disabled);
         assert.isTrue(alertFired);
       }
+    });
+
+    test('constructBugLinkURL with no owner/component', () => {
+      element.comment = exampleComment;
+      assert.equal(
+        element.constructBugLinkURL({}),
+        ('https://bugs.chromium.org/p/chromium/issues/entry' +
+         '?summary=Issue+report+for+Spacey%2FMixed' +
+         '&description=Run+ID%3A+2345' +
+         '&components=Infra%3EPlatform%3ETricium'));
+    });
+
+    test('constructBugLinkURL with owner/component', () => {
+      element.comment = exampleComment;
+      assert.equal(
+        element.constructBugLinkURL({
+          owner: 'someone@chromium.org',
+          monorailComponent: 'Some>Component',
+        }),
+        ('https://bugs.chromium.org/p/chromium/issues/entry' +
+         '?summary=Issue+report+for+Spacey%2FMixed' +
+         '&description=Run+ID%3A+2345' +
+         '&components=Some%3EComponent' +
+         '&cc=someone%40chromium.org'));
     });
   });
 </script>

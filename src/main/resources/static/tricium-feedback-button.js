@@ -25,6 +25,11 @@
         type: String,
         value: 'Not useful',
       },
+      bugLinkURL: {
+        type: String,
+        value: ('https://bugs.chromium.org/p/chromium/issues/entry'+
+                '?components=Infra%3EPlatform%3ETricium'),
+      },
     },
 
     /** Upon attachment in the page, initialize the element. */
@@ -86,6 +91,7 @@
       this.disabled = true;
       try {
         const response = await this.$.client.reportNotUseful(this.comment);
+        this.bugLinkURL = this.constructBugLinkURL(response);
         this.buttonText = 'Reported not useful';
         this.$.buglink.hidden = false;
         return response;
@@ -97,6 +103,21 @@
         this.disabled = false;
         return Promise.reject();
       }
+    },
+
+    constructBugLinkURL(response) {
+      const params = new URLSearchParams();
+      params.set('summary', `Issue report for ${this.comment.robot_id}`);
+      params.set('description', `Run ID: ${this.comment.robot_run_id}`);
+      params.set('components', 'Infra>Platform>Tricium');
+      if (response.monorailComponent) {
+        params.set('components', response.monorailComponent);
+      }
+      if (response.owner) {
+        params.set('cc', response.owner);
+      }
+      const base = 'https://bugs.chromium.org/p/chromium/issues/entry';
+      return base + '?' + params.toString();
     },
   });
 })();

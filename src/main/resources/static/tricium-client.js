@@ -322,7 +322,7 @@
      */
     async _refreshToken(timeoutMs = 1000) {
       if (!this._sharedAuthState.config) {
-        throw Error('Trying to refresh token when OAuth is not configured.')
+        throw Error('Trying to refresh token when OAuth is not configured.');
       }
       const opts = {
         client_id: this._sharedAuthState.config.client_id,
