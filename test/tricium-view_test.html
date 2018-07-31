@@ -44,6 +44,39 @@ found in the LICENSE file.
       assert.isFalse(element._loggedIn);
     });
 
+    test('merged CL sets revision to last before merge on attached', async () => {
+      element.change = {
+        change_id: 'Iabc12345def123451234',
+        _number: 12345,
+        status: 'MERGED',
+        revisions: {
+          '1badc0ffee': {
+            kind: 'REWORK',
+            _number: 1,
+            ref: 'refs/changes/45/12345/1',
+          },
+          '2ba5eba110': {
+            kind: 'REWORK',
+            _number: 2,
+            ref: 'refs/changes/45/12345/2',
+          },
+        },
+      };
+      element.revision = {
+        kind: 'REWORK',
+        _number: 2,
+        ref: 'refs/changes/45/12345/2',
+      };
+
+      element.attached()
+
+      assert.deepEqual(element.revision, {
+        kind: 'REWORK',
+        _number: 1,
+        ref: 'refs/changes/45/12345/1',
+      })
+    }),
+
     test('_update sets timeout when not finished', async () => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());

@@ -57,6 +57,18 @@
         console.warn('element attached without change and revision set.');
         return;
       }
+
+      // If the change is merged, use the previous revision,
+      // since Tricium doesn't run on merged changes.
+      const lastNumber = this.revision._number;
+      if (this.change.status == 'MERGED') {
+        for (const id in this.change.revisions) {
+          const r = this.change.revisions[id];
+          if (r._number == lastNumber - 1) {
+            this.revision = r;
+          }
+        }
+      }
     },
 
     detached() {
@@ -71,13 +83,14 @@
     async reload() {
       this._hidden = true;
       this._results = [];
+
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
       const config = await this.$.client.getConfig(project, plugin);
       if (config && config.triciumHost) {
         this.triciumHost = config.triciumHost;
       } else {
-        console.warn(`No config found for project "${project}", ` +
+        console.info(`No config found for project "${project}", ` +
                      `plugin "${plugin}", not fetching Tricium Progress.`);
       }
       if (this.triciumHost) {
