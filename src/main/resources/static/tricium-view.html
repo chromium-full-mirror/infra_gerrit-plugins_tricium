@@ -33,13 +33,6 @@ found in the LICENSE file.
       .header .update {
         color: var(--deemphasized-text-color);
       }
-      .num-comments-chip {
-        border: 1px solid var(--border-color);
-        margin-left: .45em;
-        padding: 0 .2em;
-        background: lightgreen;
-        text-decoration: none;
-      }
       .functions-section {
         display: flex;
         flex-wrap: wrap;
@@ -116,12 +109,6 @@ found in the LICENSE file.
                   rel="noopener">
                 [[result.name]]
               </a>
-              <span class="num-comments-chip"
-                  hidden$="[[!result.numComments]]"
-                  alt="Produced [[result.numComments]] comments."
-                  title="Produced [[result.numComments]] comments.">
-                [[result.numComments]]
-              </span>
             </div>
           </template>
         </section>
