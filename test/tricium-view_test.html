@@ -68,13 +68,13 @@ found in the LICENSE file.
         ref: 'refs/changes/45/12345/2',
       };
 
-      element.attached()
+      element.attached();
 
       assert.deepEqual(element.revision, {
         kind: 'REWORK',
         _number: 1,
         ref: 'refs/changes/45/12345/1',
-      })
+      });
     }),
 
     test('_update sets timeout when not finished', async () => {

@@ -160,16 +160,18 @@ found in the LICENSE file.
 
     test('constructBugLinkURL with no owner/component', () => {
       element.comment = exampleComment;
+      element.triciumHost = 'tricium-dev.appspot.com';
       assert.equal(
         element.constructBugLinkURL({}),
         ('https://bugs.chromium.org/p/chromium/issues/entry' +
          '?summary=Issue+report+for+Spacey%2FMixed' +
-         '&description=Run+ID%3A+2345' +
+         '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
          '&components=Infra%3EPlatform%3ETricium'));
     });
 
     test('constructBugLinkURL with owner/component', () => {
       element.comment = exampleComment;
+      element.triciumHost = 'tricium-dev.appspot.com';
       assert.equal(
         element.constructBugLinkURL({
           owner: 'someone@chromium.org',
@@ -177,7 +179,7 @@ found in the LICENSE file.
         }),
         ('https://bugs.chromium.org/p/chromium/issues/entry' +
          '?summary=Issue+report+for+Spacey%2FMixed' +
-         '&description=Run+ID%3A+2345' +
+         '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
          '&components=Some%3EComponent' +
          '&cc=someone%40chromium.org'));
     });

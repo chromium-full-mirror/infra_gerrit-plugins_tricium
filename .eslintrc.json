@@ -26,6 +26,7 @@
     "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
     "camelcase": "off",
     "eol-last": "off",
+    "guard-for-in": "off",
     "indent": "off",
     "keyword-spacing": ["error", { "after": true, "before": true }],
     "max-len": ["error", 80, 2, { "ignoreComments": true }],

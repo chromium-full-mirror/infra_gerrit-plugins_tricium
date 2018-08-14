@@ -108,7 +108,9 @@
     constructBugLinkURL(response) {
       const params = new URLSearchParams();
       params.set('summary', `Issue report for ${this.comment.robot_id}`);
-      params.set('description', `Run ID: ${this.comment.robot_run_id}`);
+      params.set(
+        'description',
+        `https://${this.triciumHost}/run/${this.comment.robot_run_id}`);
       params.set('components', 'Infra>Platform>Tricium');
       if (response.monorailComponent) {
         params.set('components', response.monorailComponent);
