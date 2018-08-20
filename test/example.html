@@ -80,43 +80,48 @@ const fakePlugin = {
 const view = document.getElementById('view');
 view.triciumHost = 'tricium-dev.appspot.com';
 view.plugin = fakePlugin;
-view._results = [
-  {
-    name: 'GitFileIsolator',
-    swarmingUrl: 'http://example.com',
-    swarmingTaskId: '1',
-    state: 'SUCCESS',
-    numComments: 0,
-  },
-  {
-    name: 'NotFinished',
-    swarmingUrl: 'http://example.com',
-    swarmingTaskId: '2',
-    state: 'RUNNING',
-    numComments: 0,
-  },
-  {
-    name: 'NotStarted',
-    state: 'PENDING',
-  },
-  {
-    name: 'NoState',
-  },
-  {
-    name: 'Broken',
-    swarmingUrl: 'http://example.com',
-    swarmingTaskId: '5',
-    state: 'FAILURE',
-    numComments: 0,
-  },
-  {
-    name: 'MyLinter',
-    swarmingUrl: 'http://example.com',
-    swarmingTaskId: '6',
-    state: 'SUCCESS',
-    numComments: 3,
-  },
-];
+view._lastUpdate = '12:00 PM';
+view._response = {
+  runId: '1234',
+  state: 'PENDING',
+  functionProgress: [
+    {
+      name: 'GitFileIsolator',
+      swarmingUrl: 'http://example.com',
+      swarmingTaskId: '1',
+      state: 'SUCCESS',
+      numComments: 0,
+    },
+    {
+      name: 'NotFinished',
+      swarmingUrl: 'http://example.com',
+      swarmingTaskId: '2',
+      state: 'RUNNING',
+      numComments: 0,
+    },
+    {
+      name: 'NotStarted',
+      state: 'PENDING',
+    },
+    {
+      name: 'NoState',
+    },
+    {
+      name: 'Broken',
+      swarmingUrl: 'http://example.com',
+      swarmingTaskId: '5',
+      state: 'FAILURE',
+      numComments: 0,
+    },
+    {
+      name: 'MyLinter',
+      swarmingUrl: 'http://example.com',
+      swarmingTaskId: '6',
+      state: 'SUCCESS',
+      numComments: 3,
+    },
+  ],
+};
 
 /*
  * Development test function to use to get the tricium-view to fetch
@@ -125,16 +130,17 @@ view._results = [
 function useExampleChange() {
   view.$.client._getGerritHost = () => 'chromium-review.googlesource.com';
   view.$.client.triciumHost = 'tricium-dev.appspot.com';
+  view.triciumHost = 'tricium-dev.appspot.com';
   view.change = {
     project: 'playground/gerrit-tricium',
     id: 'playground%2Fgerrit-tricium~master~' +
-        'If88225c9a5e7d6b455f1cbbc7d5fbe7ff5972b16',
+        'I7eaf3614555387e6acc55003edb068749d60bb32',
   };
   view.revision = {
-    ref: 'refs/changes/46/899646/6',
+    ref: 'refs/changes/12/1171212/9',
     _number: 6,
   };
-  view._refreshProgress();
+  view._update();
 }
 
 </script>

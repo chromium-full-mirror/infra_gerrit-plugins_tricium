@@ -7,17 +7,6 @@
   const DEFAULT_UPDATE_INTERVAL_MS = 1000 * 5;
   const MAX_UPDATE_INTERVAL_MS = 1000 * 60 * 5;
 
-  /**
-   * Enum of possible Tricium function states to show.
-   * See the State enum in the Tricium API: https://goo.gl/rA5H1m.
-   */
-  const FunctionState = {
-    PENDING: 'pending',
-    RUNNING: 'running',
-    FAILURE: 'failure',
-    SUCCESS: 'success',
-  };
-
   Polymer({
     is: 'tricium-view',
 
@@ -30,7 +19,8 @@
         observer: 'reload',
       },
 
-      _results: Array,
+      // Response is a ProgressResponse or null; see https://goo.gl/rA5H1m.
+      _response: Object,
       _hidden: {
         type: Boolean,
         value: false,
@@ -39,7 +29,6 @@
         type: Boolean,
         value: false,
       },
-      _lastUpdate: String,
       _needsUpdate: {
         type: Boolean,
         value: false,
@@ -82,7 +71,7 @@
      */
     async reload() {
       this._hidden = true;
-      this._results = [];
+      this._response = null;
 
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
@@ -117,9 +106,9 @@
     async _update() {
       await this.$.client.getOAuthToken();
       try {
-        const results = await this.$.client.getProgress(
+        const response = await this.$.client.getProgress(
             this.change, this.revision);
-        this._updateState(results);
+        this._updateState(response);
       } catch (err) {
         this._updateIntervalMs = Math.min(
             MAX_UPDATE_INTERVAL_MS,
@@ -131,23 +120,20 @@
 
     /**
      * Update element state based on the given fetched progress.
-     *
-     * The fields in the FunctionProgress objects are specified in the
-     * Tricium API: See API specification in: https://goo.gl/rA5H1m
-     *
-     * @param {Array<FunctionProgress>} results Fetched results.
      */
-    _updateState(results) {
-      this._lastUpdate = new Date().toLocaleTimeString();
-      this._results = results;
+    _updateState(response) {
+      this._response = response;
       this._updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS;
     },
 
     /** Set a timeout to update again if applicable. */
     _resetTimeout() {
       this._clearUpdateTimeout();
-      // If all analyzers are finished, then results won't change
+      // If all analyzers are finished, then the results won't change
       // again for this patch set.
+      // TODO(qyearsley): If we don't want to show per-analyzer
+      // results, we can actually stop updating as soon as we
+      // get the run ID the first time there are real results.
       if (this._isDone()) {
         return;
       }
@@ -170,18 +156,16 @@
      * once it is non-empty, we assume that there will be no additional
      * analyzers in later responses.
      *
-     * @param {Array<FunctionProgress>} results Fetched results.
      * @return {Boolean} True if the Tricium run is finished, false otherwise.
      */
     _isDone() {
-      if (!this._results || this._results.length == 0) {
+      if (!this._response) {
         return false;
       }
-      return this._results.every((r) => {
-        // The state is considered done if it is not pending or running.
-        // It might be canceled, aborted, failed, or finished successfully.
-        return r.state && r.state != 'PENDING' && r.state != 'RUNNING';
-      });
+      // The state is considered "done" if it is not pending or running.
+      // Finished states include canceled, aborted, failure, or success.
+      const state = this._response.state;
+      return state && state != 'PENDING' && state != 'RUNNING';
     },
 
     _handleVisibilityChange(e) {
@@ -199,44 +183,28 @@
       this._update();
     },
 
-    _computeTitleText(results) {
-      if (!results || results.length == 0) {
+    /** Return a string to show as the bold title in the UI. */
+    _computeTitleText(response) {
+      if (!response) {
         return 'No Tricium Results';
       }
-      return 'Tricium Results';
+      return 'Tricium';
     },
 
-    _computeUpdateText(lastUpdate) {
-      if (!lastUpdate) {
+    /** Return a URL for viewing run details. */
+    _computeRunURL(response) {
+      if (!response || !response.runId || !this.triciumHost) {
         return '';
       }
-      return `Last updated at ${lastUpdate}.`;
+      return `https://${this.triciumHost}/run/${response.runId}`;
     },
 
-    /**
-     * Return a string indicating Tricium function state.
-     *
-     * @param {FunctionProgress} result An object with a "state" property.
-     * @return {string} Function state. May be used as a CSS class name.
-     */
-    _getFunctionClass(result) {
-      if (!result.state) {
-        return 'pending';
+    /** Return a string describing the run ID. */
+    _computeRunText(response) {
+      if (!response || !response.runId) {
+        return '';
       }
-      return FunctionState[result.state] || '';
-    },
-
-    /** Return a URL to view details for a particular function run. */
-    _getFunctionUrl(result) {
-      return `${result.swarmingUrl}/task?id=${result.swarmingTaskId}`;
-    },
-
-    /** Return a string describing the current patchset number. */
-    _computePatchsetDescription(revision) {
-      if (revision && revision._number) {
-        return `Showing results for patchset ${revision._number}.`;
-      }
-      return '';
+      return `Run ${response.runId}`;
     },
   });
 })();

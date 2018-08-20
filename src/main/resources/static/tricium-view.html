@@ -30,88 +30,25 @@ found in the LICENSE file.
         font-size: 1.17em;
         margin-right: 1em;
       }
-      .header .update {
-        color: var(--deemphasized-text-color);
-      }
-      .functions-section {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 0;
-      }
-      .function {
-        border: 1px solid var(--border-color);
-        display: flex;
-        font-size: .9em;
-        margin: 0.5em;
-        overflow: hidden;
-        padding: .45em 1.35em;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .function.pending {
-        background-color: #e0e0e0;
-      }
-      .function.running {
-        background-color: #ffeb3b;
-      }
-      .function.success {
-        background-color: #8bc34a;
-      }
-      .function.failure {
-        display: none;
-      }
-      .function .title {
-        color: var(--primary-text-color);
-        text-decoration: none;
-      }
-      .function .title:hover {
-        text-decoration: underline;
-      }
-      .function .title::before {
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: 12px;
-        content: ' ';
-        display: block;
-        height: 1em;
-        width: 1em;
-        margin-left: -1.2em;
-        margin-top: .25em;
-        position: absolute;
-      }
-      .function.pending .title::before {
-        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
-      }
-      .function.running .title::before {
-        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/more_horiz_black_18dp.png");
-      }
-      .function.success .title::before {
-        background-image: url("https://www.gstatic.com/images/icons/material/system/1x/check_black_18dp.png");
+      .header a {
+        color: var(--link-color);
       }
     </style>
     <template is="dom-if" if="[[triciumHost]]">
       <div id="view-container" hidden$="[[_hidden]]">
         <div class="header container">
           <div class="container">
-            <h3 class="label">[[_computeTitleText(_results)]]</h3>
-            <div class="update">
-              [[_computePatchsetDescription(revision)]]
-              [[_computeUpdateText(_lastUpdate)]]
-            </div>
+            <h3 class="label">[[_computeTitleText(_response)]]</h3>
+            <a href="[[_computeRunURL(_response)]]"
+               hidden$="[[!_computeRunURL(_response)]]">
+              [[_computeRunText(_response)]]
+            </a>
+          </div>
+          <div class="container">
+              <a href="https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium">More info</a> /
+              <a href="https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium">File bug</a>
           </div>
         </div>
-        <section class="functions-section">
-          <template is="dom-repeat" items="[[_results]]" as="result">
-            <div class$="function [[_getFunctionClass(result)]]">
-              <a class="title"
-                  aria-label$="[[result.name]] [[_getFunctionClass(result)]]"
-                  href$="[[_getFunctionUrl(result)]]" target="_blank"
-                  rel="noopener">
-                [[result.name]]
-              </a>
-            </div>
-          </template>
-        </section>
       </div>
     </template>
     <tricium-client id="client"

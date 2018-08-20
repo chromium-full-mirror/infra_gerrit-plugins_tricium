@@ -84,9 +84,9 @@
      * @param {ChangeInfo} change The current CL.
      * @param {RevisionInfo} revision The current patchset.
      * @return {Promise} If there is a successful response from
-     *     Tricium, this resolves to an Array of of FunctionProgress
-     *     objects; if Tricium returns 404, this resolves with an
-     *     empty Array; else it rejects with an error message.
+     *     Tricium, this resolves to a a ProgressResponse object.
+     *     If Tricium returns 404, this resolves with null; else
+     *     else it rejects with an error message.
      */
     async getProgress(change, revision) {
       if (!this.triciumHost) {
@@ -103,11 +103,10 @@
       const response = await this._rpcRequest(
           this.triciumHost, 'tricium.Tricium', 'Progress', request);
       if (this._isOk(response)) {
-        const obj = await this._parseRpcJson(response);
-        return obj.functionProgress;
+        return await this._parseRpcJson(response);
       }
       if (this._isNotFound(response)) {
-        return [];
+        return null;
       }
       throw await this._message(response);
     },

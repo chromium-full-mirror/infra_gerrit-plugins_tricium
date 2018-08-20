@@ -92,7 +92,7 @@ found in the LICENSE file.
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
-          () => Promise.resolve([{name: 'MyLinter', state: 'SUCCESS'}]));
+        () => Promise.resolve({runId: '1324', state: 'SUCCESS'}));
       await element._update();
       assert.isNotOk(element._updateTimeoutID);
     });
@@ -109,104 +109,30 @@ found in the LICENSE file.
       assert.isOk(element._updateTimeoutID);
     });
 
-    test('_computeTitleText with empty list', () => {
-      assert.equal('No Tricium Results', element._computeTitleText([]));
+    test('_computeTitleText with null response', () => {
+      assert.equal('No Tricium Results', element._computeTitleText(null));
     });
 
-    test('_computeTitleText with non-empty list', () => {
-      assert.equal('Tricium Results', element._computeTitleText([{name: 'Hi'}]));
+    test('_computeTitleText with non-null response', () => {
+      assert.equal('Tricium', element._computeTitleText({}));
     });
 
-    test('_getFunctionClass with valid states', () => {
-      assert.equal('pending', element._getFunctionClass({state: 'PENDING'}));
-      assert.equal('running', element._getFunctionClass({state: 'RUNNING'}));
-      assert.equal('success', element._getFunctionClass({state: 'SUCCESS'}));
-      assert.equal('failure', element._getFunctionClass({state: 'FAILURE'}));
-    });
-
-    test('_getFunctionClass with an invalid state', () => {
-      assert.equal('', element._getFunctionClass({state: 'BOGUS'}));
-    });
-
-    test('_getFunctionClass with no state', () => {
-      assert.equal('pending', element._getFunctionClass({}));
-    });
-
-    test('_computePatchsetDescription with patchset', () => {
-      assert.equal(
-          'Showing results for patchset 3.',
-          element._computePatchsetDescription({
-            description: 'Update from feedback',
-            kind: 'REWORK',
-            _number: 3,
-            ref: 'refs/changes/14/702314/3',
-          }));
-    });
-
-    test('_computePatchsetDescription without patchset', () => {
-      assert.equal('', element._computePatchsetDescription({}));
-    });
-
-    test('_isDone returns false with empty results', () => {
-      element._results = [];
+    test('_isDone returns false with null response', () => {
+      element._response = null;
       assert.isFalse(element._isDone());
     });
 
-    test('_isDone returns false with unfinished result', () => {
-      element._results = [
-        {
-          name: 'NotStarted',
-          state: 'PENDING',
-        },
-      ];
+    test('_isDone returns false when state is pending/running', () => {
+      element._response = {state: 'PENDING'};
       assert.isFalse(element._isDone());
-      element._results = [
-        {
-          name: 'NotFinished',
-          swarmingUrl: 'http://example.com',
-          swarmingTaskId: '2',
-          state: 'RUNNING',
-        },
-      ];
+      element._response = {state: 'RUNNING'};
       assert.isFalse(element._isDone());
     });
 
-    test('_isDone returns false with unfinished result', () => {
-      element._results = [
-        {
-          name: 'NotStarted',
-          state: 'PENDING',
-        },
-      ];
-      assert.isFalse(element._isDone());
-      element._results = [
-        {
-          name: 'NotFinished',
-          swarmingUrl: 'http://example.com',
-          swarmingTaskId: '2',
-          state: 'RUNNING',
-        },
-      ];
-      assert.isFalse(element._isDone());
-    });
-
-    test('_isDone returns true with only finished results', () => {
-      element._results = [
-        {
-          name: 'MyLinter',
-          swarmingUrl: 'http://example.com',
-          swarmingTaskId: '6',
-          state: 'SUCCESS',
-          numComments: 3,
-        },
-        {
-          name: 'MyBrokenLinter',
-          swarmingUrl: 'http://example.com',
-          swarmingTaskId: '6',
-          state: 'FAILURE',
-          numComments: 0,
-        },
-      ];
+    test('_isDone returns true when state is success/failure', () => {
+      element._response = {state: 'SUCCESS'};
+      assert.isTrue(element._isDone());
+      element._response = {state: 'FAILURE'};
       assert.isTrue(element._isDone());
     });
   });
