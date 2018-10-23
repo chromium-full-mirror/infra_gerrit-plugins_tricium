@@ -4,6 +4,7 @@
 
 package com.googlesource.chromium.plugins.tricium;
 
+import com.google.common.flogger.FluentLogger;
 import com.google.gerrit.extensions.annotations.PluginName;
 import com.google.gerrit.extensions.restapi.RestReadView;
 import com.google.gerrit.server.config.PluginConfigFactory;
@@ -13,13 +14,11 @@ import com.google.gson.annotations.SerializedName;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.jgit.lib.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 class GetConfig implements RestReadView<ProjectResource> {
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
-  private static final Logger LOG = LoggerFactory.getLogger(GetConfig.class);
   private static final String HOST_SECTION = "host";
   private static final String TRICIUM = "tricium";
 
@@ -34,14 +33,14 @@ class GetConfig implements RestReadView<ProjectResource> {
 
   @Override
   public TriciumConfig apply(ProjectResource project) throws NoSuchProjectException {
-    LOG.info("Getting config for {}...", project.getName());
+    logger.atInfo().log("Getting config for %s...", project.getName());
     Config cfg = config.getProjectPluginConfigWithInheritance(
         project.getNameKey(), pluginName);
-    LOG.info("Found sections: {}", cfg.getSections());
+    logger.atInfo().log("Found sections: %s", cfg.getSections());
 
     TriciumConfig result = new TriciumConfig();
     result.triciumHost = cfg.getString(HOST_SECTION, null, TRICIUM);
-    LOG.info("Found Tricium host: {}", result.triciumHost);
+    logger.atInfo().log("Found Tricium host: %s", result.triciumHost);
 
     return result;
   }
