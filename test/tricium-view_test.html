@@ -122,17 +122,19 @@ found in the LICENSE file.
       assert.isFalse(element._isDone());
     });
 
-    test('_isDone returns false when state is pending/running', () => {
-      element._response = {state: 'PENDING'};
+    test('_isDone returns false with an empty response', () => {
+      element._response = {};
       assert.isFalse(element._isDone());
-      element._response = {state: 'RUNNING'};
+      element._response = {runId: 0};
       assert.isFalse(element._isDone());
     });
 
-    test('_isDone returns true when state is success/failure', () => {
-      element._response = {state: 'SUCCESS'};
+    test('_isDone returns true when there is a run ID', () => {
+      element._response = {runId: 123, state: 'SUCCESS'};
       assert.isTrue(element._isDone());
-      element._response = {state: 'FAILURE'};
+      element._response = {runId: 123, state: 'FAILURE'};
+      assert.isTrue(element._isDone());
+      element._response = {runId: 123};
       assert.isTrue(element._isDone());
     });
   });

@@ -131,9 +131,6 @@
       this._clearUpdateTimeout();
       // If all analyzers are finished, then the results won't change
       // again for this patch set.
-      // TODO(qyearsley): If we don't want to show per-analyzer
-      // results, we can actually stop updating as soon as we
-      // get the run ID the first time there are real results.
       if (this._isDone()) {
         return;
       }
@@ -150,22 +147,15 @@
     },
 
     /**
-     * Check whether the Tricium analyzers are all finished.
+     * Check whether we are done requesting results from Tricium.
      *
-     * The Tricium workflow is generated all at once before it is started, so
-     * once it is non-empty, we assume that there will be no additional
-     * analyzers in later responses.
+     * Since we just show a run ID with a link, we are done as soon
+     * as we get any valid response.
      *
-     * @return {Boolean} True if the Tricium run is finished, false otherwise.
+     * @return {Boolean} True when we are done requesting results.
      */
     _isDone() {
-      if (!this._response) {
-        return false;
-      }
-      // The state is considered "done" if it is not pending or running.
-      // Finished states include canceled, aborted, failure, or success.
-      const state = this._response.state;
-      return state && state != 'PENDING' && state != 'RUNNING';
+      return Boolean(this._response && this._response.runId);
     },
 
     _handleVisibilityChange(e) {
