@@ -26,7 +26,6 @@
       _sharedAuthState: {
         type: Object,
         value: {
-          loading: false,
           config: null,
           token: null,
         },
@@ -239,40 +238,35 @@
      * @return {Promise} Resolves upon completion.
      */
     async _configureOAuthLibrary() {
-      // No need to configure OAuth if it's already configured,
-      // or if it's already being configured.
-      if (this._sharedAuthState.config || this._sharedAuthState.loading) {
+      const loggedIn = await this.plugin.restApi().getLoggedIn();
+      // No need to configure OAuth if no user is logged in, or if it's
+      // already configured.
+      if (!loggedIn || this._sharedAuthState.config) {
         return;
       }
 
-      this._sharedAuthState.loading = true;
       const gapi = window.gapi;
 
+      await new Promise((resolve) => {
+        // gapi library shares state between clients, so if this library is
+        // already used by another plugin, there may be unexpected results.
+        // TODO(qyearsley): Check whether gapi is already configured, and if
+        // so log a message and do nothing.
+        // More about gapi:
+        // https://developers.google.com/api-client-library/javascript/reference/referencedocs
+        gapi.load('config_min', resolve);
+      });
+      const config = await this._getOAuthConfig();
+
+      if (config.hasOwnProperty('auth_url') && config.auth_url) {
+        gapi.config.update('oauth-flow/authUrl', config.auth_url);
+      }
+      if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
+        gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
+      }
+      this._sharedAuthState.config = config;
+
       try {
-        // No need to configure if no use is logged in.
-        const loggedIn = await this.plugin.restApi().getLoggedIn();
-        if (!loggedIn) {
-          return;
-        }
-
-        // The gapi library shares state between clients, so if this library
-        // is used by another plugin, there may be unexpected results;
-        // thus log a warning so that we can easily check if this happens.
-        if (gapi.config && gapi.config.get()) {
-        console.warn('gapi config loaded twice, gapi.config.get() =>',
-                       gapi.config.get());
-        }
-        await new Promise((resolve) => { gapi.load('config_min', resolve); });
-        const config = await this._getOAuthConfig();
-
-        if (config.hasOwnProperty('auth_url') && config.auth_url) {
-          gapi.config.update('oauth-flow/authUrl', config.auth_url);
-        }
-        if (config.hasOwnProperty('proxy_url') && config.proxy_url) {
-          gapi.config.update('oauth-flow/proxyUrl', config.proxy_url);
-        }
-        this._sharedAuthState.config = config;
-
         await new Promise((resolve) => {
           // Loading auth has a side-effect. The URLs should be set before
           // loading it.
@@ -280,9 +274,6 @@
         });
       } catch (err) {
         this._sharedAuthState.config = null;
-        console.warn('Failed to configure oauth:', err);
-      } finally {
-        this._sharedAuthState.loading = false;
       }
     },
 
