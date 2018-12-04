@@ -4,8 +4,14 @@
 (function() {
   'use strict';
 
+  // Constants determining update behavior.
+  // Tricium polls for new patchsets once per minute; it is expected that
+  // results should be available after a couple of minutes.
+  // In practice, if there are results, they'll usually be available
+  // on the first request; if there are not, then there never will be.
   const DEFAULT_UPDATE_INTERVAL_MS = 1000 * 5;
   const MAX_UPDATE_INTERVAL_MS = 1000 * 60 * 5;
+  const MAX_UPDATE_DELAY_MS = 1000 * 60;
 
   Polymer({
     is: 'tricium-view',
@@ -19,8 +25,6 @@
         observer: 'reload',
       },
 
-      // Response is a ProgressResponse or null; see https://goo.gl/rA5H1m.
-      _response: Object,
       _hidden: {
         type: Boolean,
         value: false,
@@ -29,14 +33,24 @@
         type: Boolean,
         value: false,
       },
+      // How long to keep trying to update after initialization.
+      _maxUpdateDelayMs: {
+        type: Number,
+        value: MAX_UPDATE_DELAY_MS,
+      },
       _needsUpdate: {
         type: Boolean,
         value: false,
       },
+      // Response is a ProgressResponse or null; see https://goo.gl/rA5H1m.
+      _response: Object,
       _updateIntervalMs: {
         type: Number,
         value: DEFAULT_UPDATE_INTERVAL_MS,
       },
+      // Start time is the time that this element was loaded,
+      // used to determine how long we've been trying to update.
+      _startTime: Date,
       _updateTimeoutID: Number,
     },
 
@@ -72,6 +86,7 @@
     async reload() {
       this._hidden = true;
       this._response = null;
+      this._startTime = new Date();
 
       const project = this.change.project;
       const plugin = this.plugin.getPluginName();
@@ -104,6 +119,11 @@
      * @return {Promise} Resolves upon completion.
      */
     async _update() {
+      const now = new Date();
+      if (Number(this._startTime) + this._maxUpdateDelayMs < Number(now)) {
+        this._clearUpdateTimeout();
+        return;
+      }
       await this.$.client.getOAuthToken();
       try {
         const response = await this.$.client.getProgress(

@@ -77,14 +77,17 @@ found in the LICENSE file.
       });
     }),
 
-    test('_update sets timeout when not finished', async () => {
-      assert.isNotOk(element._updateTimeoutID);
+    test('_update clears timeout when after trying for max time', async () => {
+      // Set the start time to some time a long time ago.
+      element._startTime = new Date('2018-06-01');
       sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
           element.$.client, 'getProgress',
           () => Promise.resolve([{name: 'MyLinter', state: 'PENDING'}]));
       await element._update();
-      assert.isDefined(element._updateTimeoutID);
+      // We shall not try to update again, if it still appears to be "pending",
+      // since the start time was long ago. So, no update timeout is set.
+      assert.isNotOk(element._updateTimeoutID);
     });
 
     test('_update clears timeout when finished', async () => {
