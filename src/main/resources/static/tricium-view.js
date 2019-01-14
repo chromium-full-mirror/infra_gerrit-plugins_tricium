@@ -185,6 +185,12 @@
       }
     },
 
+    _handleFileBugTap(e) {
+      window.open(
+          "https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium",
+          "_blank");
+    },
+
     _updateTimeoutFired() {
       if (document.hidden) {
         this._needsUpdate = true;

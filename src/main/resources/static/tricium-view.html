@@ -39,14 +39,13 @@ found in the LICENSE file.
         <div class="header container">
           <div class="container">
             <h3 class="label">[[_computeTitleText(_response)]]</h3>
-            <a href="[[_computeRunURL(_response)]]"
+            <a href="[[_computeRunURL(_response)]]" target="_blank"
                hidden$="[[!_computeRunURL(_response)]]">
               [[_computeRunText(_response)]]
             </a>
           </div>
           <div class="container">
-              <a href="https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium">More info</a> /
-              <a href="https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium">File bug</a>
+            <gr-button link on-tap="_handleFileBugTap">File Bug</gr-button>
           </div>
         </div>
       </div>
