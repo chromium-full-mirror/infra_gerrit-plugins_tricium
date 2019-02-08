@@ -30,10 +30,6 @@ you can also view and tweak UI interactively.
 
 To install the Polymer tool-set globally, run `npm install -g polymer-cli`.
 
-After running `polymer serve`, you can view an example of how the
-tricium-view element appears by navigating to
-http://localhost:8081/components/tricium/test/example.html.
-
 ### Integration testing with Gerrit
 
 You can create a local instance of Gerrit and use this plugin in that instance.

@@ -4,8 +4,13 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
+<script src="./promises.js"></script>
+<script src="./auth.js"></script>
+<script src="./tricium-client.js"></script>
+
 <link rel="import" href="tricium-view.html">
 <link rel="import" href="tricium-feedback-button.html">
+
 <script>
 (function() {
   'use strict';
@@ -13,9 +18,9 @@ found in the LICENSE file.
   Gerrit.install((plugin) => {
     if (!window.Polymer) { return; } // Only supported in PolyGerrit.
 
+    window.tricium.initAuth(plugin);
     plugin.registerCustomComponent(
         'change-view-integration', 'tricium-view');
-
     plugin.registerCustomComponent(
         'robot-comment-controls', 'tricium-feedback-button');
   });

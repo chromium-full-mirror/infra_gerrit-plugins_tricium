@@ -5,118 +5,21 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-<title>tricium-client</title>
+<title>tricium-client.js test</title>
 
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 <script src="../bower_components/web-component-tester/browser.js"></script>
+<script src="../src/main/resources/static/promises.js"></script>
+<script src="../src/main/resources/static/auth.js"></script>
+<script src="../src/main/resources/static/tricium-client.js"></script>
+<script src="./test-util.js"></script>
 
 <link rel="import" href="../bower_components/iron-test-helpers/iron-test-helpers.html">
-<link rel="import" href="../src/main/resources/static/tricium-client.html">
-
-<test-fixture id="tricium-client-fixture">
-  <template>
-    <tricium-client></tricium-client>
-  </template>
-</test-fixture>
 
 <script>
 
-  async function assertRejects(promise, expectedReason = null) {
-    try {
-      await promise();
-      assert.fail('exception', 'no exception');
-    } catch (actualReason) {
-      if (expectedReason) {
-        assert.deepEqual(actualReason, expectedReason);
-      }
-    }
-  }
-
-  suite('<tricium-client> oauth-related behavior', () => {
-    let element;
-    let sandbox;
-
-    setup(() => {
-      element = fixture('tricium-client-fixture');
-      sandbox = sinon.sandbox.create();
-      sandbox.stub(window, 'gapi', {
-        auth: {
-          init: () => { throw Error('should be stubbed'); },
-          authorize: () => { throw Error('should be stubbed'); },
-        },
-      });
-    });
-
-    teardown(() => {
-      sandbox.restore();
-    });
-
-    function nowSeconds() {
-      return ~~(Date.now() / 1000);
-    }
-
-    test('_oauthTokenIsValid with valid token', () => {
-      assert.isTrue(element._oauthTokenIsValid({
-        access_token: 'foo',
-        expires_at: (nowSeconds() + 3600) + '',
-      }));
-    });
-
-    test('_oauthTokenIsValid with no access_token field', () => {
-      assert.isFalse(element._oauthTokenIsValid({
-        expires_at: (nowSeconds() + 3600) + '',
-      }));
-    });
-
-    test('_oauthTokenIsValid with expired token', () => {
-      assert.isFalse(element._oauthTokenIsValid({
-        access_token: 'foo',
-        expires_at: (nowSeconds() - 5) + '',
-      }));
-    });
-
-    test('_oauthTokenIsValid with invalid values', () => {
-      assert.isFalse(element._oauthTokenIsValid(null));
-      assert.isFalse(element._oauthTokenIsValid(undefined));
-      assert.isFalse(element._oauthTokenIsValid({access_token: 'foo'}));
-    });
-
-    test('_refreshToken resolves when authorize gives token', async () => {
-      const token = {
-        access_token: 'test_access_token',
-        expires_at: (nowSeconds() + 3600) + '',
-      };
-      element._sharedAuthState = {
-        config: {
-          client_id: 'test_client_id',
-          email: 'johndoe@example.com',
-        },
-      };
-      sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
-        callback(token);
-      });
-      const value = await element._refreshToken(100);
-      assert.deepEqual(value, token);
-    });
-
-    test('_refreshToken rejects when authorize gives error', async () => {
-      const token = {error: 'could not authorize'};
-      sandbox.stub(window.gapi.auth, 'authorize', (opts, callback) => {
-        callback(token);
-      });
-      assertRejects(async () => await element._refreshToken(100));
-    });
-
-    test('_refreshToken rejects when authorize times out', async () => {
-      // In this test, we make it so that authorize never resolves,
-      // and the timeout is made smaller so that the test completes faster.
-      sandbox.stub(window.gapi.auth, 'authorize', () => new Promise(() => {}));
-      assertRejects(async () => await element._refreshToken(0));
-    });
-  });
-
-  suite('<tricium-client> rpc request behavior', () => {
-    let element;
+  suite('TriciumV1Client RPC request behavior', () => {
+    let client;
 
     const change = {
       id: 'myProject~master~I3ea943139cb62e86071996f2480e58bf3eeb9dd2',
@@ -151,8 +54,8 @@ found in the LICENSE file.
     }
 
     setup(() => {
-      element = fixture('tricium-client-fixture');
-      element.triciumHost = 'tricium-mock.appspot.com';
+      client = new window.tricium.TriciumV1Client('tricium-mock.appspot.com');
+      client._getAccessToken = async () => 'accessToken';
       sinon.stub(window, 'fetch');
     });
 
@@ -182,7 +85,7 @@ found in the LICENSE file.
       };
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      const data = await element.getProgress(change, revision);
+      const data = await client.getProgress(change, revision);
       assert.deepEqual(data, responseData);
     });
 
@@ -192,8 +95,8 @@ found in the LICENSE file.
         headers: {'X-Prpc-Grpc-Code': '3'},
       });
       window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          async () => element.getProgress(change, revision),
+      window.tricium.test.assertRejects(
+          client.getProgress(change, revision),
           'X-Prpc-Grpc-Code: 3\nHTTP status: 400\nBody: Invalid Argument');
     });
 
@@ -207,7 +110,7 @@ found in the LICENSE file.
         headers: {'X-Prpc-Grpc-Code': '5'},
       });
       window.fetch.returns(Promise.resolve(response));
-      const data = await element.getProgress(change, revision);
+      const data = await client.getProgress(change, revision);
       assert.isNull(data);
     });
 
@@ -216,8 +119,8 @@ found in the LICENSE file.
         status: 200,
       });
       window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          async () => await element.getProgress(change, revision),
+      window.tricium.test.assertRejects(
+          client.getProgress(change, revision),
           'X-Prpc-Grpc-Code: NaN\nHTTP status: 200\nBody: No pRPC code');
     });
 
@@ -225,21 +128,21 @@ found in the LICENSE file.
       const responseData = {responseField: 123};
       const response = newSuccessResponse(responseData);
       window.fetch.returns(Promise.resolve(response));
-      const data = await element.reportNotUseful(comment);
+      const data = await client.reportNotUseful(comment);
       assert.deepEqual(data, responseData);
     });
 
     test('reportNotUseful with invalid empty comment', async () => {
       const response = newSuccessResponse({responseField: 123});
       window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          async () => await element.reportNotUseful({properties: {}}),
+      window.tricium.test.assertRejects(
+          client.reportNotUseful({properties: {}}),
           'No tricium_comment_uuid field in comment.properties: {}');
     });
 
     test('_message describes response contents', async () => {
       const successResponse = newSuccessResponse({responseField: 123});
-      const message = await element._message(successResponse);
+      const message = await client._message(successResponse);
       assert.equal(
           message,
           'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
@@ -248,7 +151,7 @@ found in the LICENSE file.
 
     test('_parseRpcJson parses pRPC JSON', async () => {
       const response = newSuccessResponse({mydata: 42});
-      const data = await element._parseRpcJson(response);
+      const data = await client._parseRpcJson(response);
       assert.deepEqual(data, {mydata: 42});
     });
 
@@ -257,7 +160,7 @@ found in the LICENSE file.
         status: 500,
         headers: {'X-Prpc-Grpc-Code': '1'},
       });
-      assertRejects(async () => await element._parseRpcJson(response));
+      window.tricium.test.assertRejects(client._parseRpcJson(response));
     });
 
     test('_rpcCode with an error code present', () => {
@@ -265,14 +168,14 @@ found in the LICENSE file.
         status: 400,
         headers: {'X-Prpc-Grpc-Code': '3'},
       });
-      assert.equal(element._rpcCode(response), 3);
+      assert.equal(client._rpcCode(response), 3);
     });
 
     test('_rpcCode with missing header', () => {
       const response = new window.Response('Not pRPC', {
         status: 200,
       });
-      assert.isNaN(element._rpcCode(response));
+      assert.isNaN(client._rpcCode(response));
     });
   });
 </script>

@@ -4,8 +4,6 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
-
-<link rel="import" href="./tricium-client.html">
 <dom-module id="tricium-feedback-button">
   <template>
     <style>
@@ -19,10 +17,6 @@ found in the LICENSE file.
         disabled$="[[disabled]]"
         link>[[buttonText]]</gr-button>
     <a id="buglink" href="[[bugLinkURL]]" target="_blank" hidden>File a Bug</a>
-    <tricium-client
-        id="client"
-        tricium-host="[[triciumHost]]"
-        plugin="[[plugin]]"></tricium-client>
   </template>
   <script src="tricium-feedback-button.js"></script>
 </dom-module>

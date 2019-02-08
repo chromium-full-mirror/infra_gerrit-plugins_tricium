@@ -29,10 +29,6 @@
         type: Boolean,
         value: false,
       },
-      _loggedIn: {
-        type: Boolean,
-        value: false,
-      },
       // How long to keep trying to update after initialization.
       _maxUpdateDelayMs: {
         type: Number,
@@ -89,22 +85,21 @@
       this._startTime = new Date();
 
       const project = this.change.project;
-      const plugin = this.plugin.getPluginName();
-      const config = await this.$.client.getConfig(project, plugin);
+      const pluginName = this.plugin.getPluginName();
+      const config = await this.plugin.restApi().get(
+          `/projects/${encodeURIComponent(project)}/` +
+          `${encodeURIComponent(pluginName)}~config`);
       if (config && config.triciumHost) {
         this.triciumHost = config.triciumHost;
       } else {
-        console.info(`No config found for project "${project}", ` +
-                     `plugin "${plugin}", not fetching Tricium Progress.`);
+        console.info(
+          `No config found for project "${project}", ` +
+          `plugin ${pluginName}, not fetching Tricium Progress.`);
       }
       if (this.triciumHost) {
         await this._update();
         this._hidden = false;
       }
-    },
-
-    _handleAuthChange(e) {
-      this._loggedIn = !!e.detail.loggedIn;
     },
 
     /**
@@ -124,9 +119,9 @@
         this._clearUpdateTimeout();
         return;
       }
-      await this.$.client.getOAuthToken();
+      const client = new window.tricium.TriciumV1Client(this.triciumHost);
       try {
-        const response = await this.$.client.getProgress(
+        const response = await client.getProgress(
             this.change, this.revision);
         this._updateState(response);
       } catch (err) {
@@ -187,8 +182,9 @@
 
     _handleFileBugTap(e) {
       window.open(
-          "https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium",
-          "_blank");
+          ('https://bugs.chromium.org/p/chromium/issues/entry' +
+           '?components=Infra%3EPlatform%3ETricium'),
+          '_blank');
     },
 
     _updateTimeoutFired() {
@@ -221,6 +217,13 @@
         return '';
       }
       return `Run ${response.runId}`;
+    },
+
+    /**
+     * Mockable equivalent of window.tricium.getAccessToken.
+     */
+    _getAccessToken() {
+      return window.tricium.getAccessToken();
     },
   });
 })();

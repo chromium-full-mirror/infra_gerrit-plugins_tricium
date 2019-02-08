@@ -9,6 +9,9 @@ found in the LICENSE file.
 
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 <script src="../bower_components/web-component-tester/browser.js"></script>
+<script src="../src/main/resources/static/promises.js"></script>
+<script src="../src/main/resources/static/auth.js"></script>
+<script src="../src/main/resources/static/tricium-client.js"></script>
 
 <link rel="import" href="../bower_components/iron-test-helpers/iron-test-helpers.html">
 <link rel="import" href="../src/main/resources/static/tricium-view.html">
@@ -27,21 +30,11 @@ found in the LICENSE file.
     setup(() => {
       element = fixture('tricium-view-fixture');
       sandbox = sinon.sandbox.create();
+      sandbox.stub(window.tricium, 'getAccessToken', async () => 'accessToken');
     });
 
     teardown(() => {
       sandbox.restore();
-    });
-
-    test('_loggedIn initial state', () => {
-      assert.isFalse(element._loggedIn);
-    });
-
-    test('_loggedIn after _handleAuthChange', () => {
-      element._handleAuthChange({detail: {loggedIn: true}});
-      assert.isTrue(element._loggedIn);
-      element._handleAuthChange({detail: {}});
-      assert.isFalse(element._loggedIn);
     });
 
     test('merged CL sets revision to last before merge on attached', async () => {
@@ -80,9 +73,8 @@ found in the LICENSE file.
     test('_update clears timeout when after trying for max time', async () => {
       // Set the start time to some time a long time ago.
       element._startTime = new Date('2018-06-01');
-      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
-          element.$.client, 'getProgress',
+          window.tricium.TriciumV1Client.prototype, 'getProgress',
           () => Promise.resolve([{name: 'MyLinter', state: 'PENDING'}]));
       await element._update();
       // We shall not try to update again, if it still appears to be "pending",
@@ -92,9 +84,8 @@ found in the LICENSE file.
 
     test('_update clears timeout when finished', async () => {
       assert.isNotOk(element._updateTimeoutID);
-      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
-          element.$.client, 'getProgress',
+          window.tricium.TriciumV1Client.prototype, 'getProgress',
         () => Promise.resolve({runId: '1324', state: 'SUCCESS'}));
       await element._update();
       assert.isNotOk(element._updateTimeoutID);
@@ -102,9 +93,8 @@ found in the LICENSE file.
 
     test('_update uses exponential back-off on error', async () => {
       assert.isNotOk(element._updateTimeoutID);
-      sandbox.stub(element.$.client, 'getOAuthToken', () => Promise.resolve());
       sandbox.stub(
-          element.$.client, 'getProgress',
+          window.tricium.TriciumV1Client.prototype, 'getProgress',
           () => Promise.reject('simulated getProgress error (expected)'));
       const initialTimeoutMs = element._updateIntervalMs;
       await element._update();

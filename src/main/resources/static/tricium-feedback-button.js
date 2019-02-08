@@ -52,27 +52,30 @@
     },
 
     /** Load config and set tricium host name. */
-    init() {
+    async init() {
       const project = this.getProjectName();
       if (!project) {
         console.warn('tricium-feedback-button could not find project name');
         return;
       }
-      const plugin = this.plugin.getPluginName();
-      return this.$.client.getConfig(project, plugin).then((config) => {
-        if (config && config.triciumHost) {
-          this.triciumHost = config.triciumHost;
-          this.disabled = false;
-        } else {
-          console.warn(`No config found for project "${project}", ` +
-                       `plugin "${plugin}", cannot report feedback.`);
-        }
-        return Boolean(this.triciumHost);
-      });
+      const pluginName = this.plugin.getPluginName();
+      const config = await this.plugin.restApi().get(
+          `/projects/${encodeURIComponent(project)}/` +
+          `${encodeURIComponent(pluginName)}~config`);
+      if (config && config.triciumHost) {
+        this.triciumHost = config.triciumHost;
+        this.disabled = false;
+      } else {
+        console.warn(`No config found for project "${project}", ` +
+                     `plugin "${pluginName}", cannot report feedback.`);
+      }
+      return Boolean(this.triciumHost);
     },
 
     /** Fetch the project name for the current change. */
     getProjectName() {
+      // We use a roundabout way of getting the project name because we don't
+      // have access to the change object like the tricium-view element does.
       // TODO(qyearsley): Find a better way to get the project name.
       const elements = document.getElementsByTagName('gr-diff');
       if (elements.length == 0) {
@@ -90,7 +93,8 @@
       }
       this.disabled = true;
       try {
-        const response = await this.$.client.reportNotUseful(this.comment);
+        const client = new window.tricium.TriciumV1Client(this.triciumHost);
+        const response = await client.reportNotUseful(this.comment);
         this.bugLinkURL = this.constructBugLinkURL(response);
         this.buttonText = 'Reported not useful';
         this.$.buglink.hidden = false;
