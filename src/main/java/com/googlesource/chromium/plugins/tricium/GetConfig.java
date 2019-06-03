@@ -34,8 +34,7 @@ class GetConfig implements RestReadView<ProjectResource> {
   @Override
   public TriciumConfig apply(ProjectResource project) throws NoSuchProjectException {
     logger.atInfo().log("Getting config for %s...", project.getName());
-    Config cfg = config.getProjectPluginConfigWithInheritance(
-        project.getNameKey(), pluginName);
+    Config cfg = config.getProjectPluginConfigWithInheritance(project.getNameKey(), pluginName);
     logger.atInfo().log("Found sections: %s", cfg.getSections());
 
     TriciumConfig result = new TriciumConfig();
