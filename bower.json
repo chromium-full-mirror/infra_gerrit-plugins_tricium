@@ -1,13 +1,13 @@
 {
-  "name": "tricium",
+  "name": "tricium-plugin",
   "dependencies": {
-    "polymer": "Polymer/polymer#*"
+    "polymer": "Polymer/polymer#^2.0.0"
   },
   "devDependencies": {
-    "iron-test-helpers": "PolymerElements/iron-test-helpers#*",
-    "test-fixture": "PolymerElements/test-fixture#*",
-    "web-component-tester": "*",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#*"
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.3.0",
+    "web-component-tester": "web-component-tester#^6.0.0"
   },
   "ignore": []
 }
