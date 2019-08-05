@@ -6,6 +6,7 @@ package com.googlesource.chromium.plugins.tricium;
 
 import com.google.common.flogger.FluentLogger;
 import com.google.gerrit.extensions.annotations.PluginName;
+import com.google.gerrit.extensions.restapi.Response;
 import com.google.gerrit.extensions.restapi.RestReadView;
 import com.google.gerrit.server.config.PluginConfigFactory;
 import com.google.gerrit.server.project.NoSuchProjectException;
@@ -32,7 +33,7 @@ class GetConfig implements RestReadView<ProjectResource> {
   }
 
   @Override
-  public TriciumConfig apply(ProjectResource project) throws NoSuchProjectException {
+  public Response<TriciumConfig> apply(ProjectResource project) throws NoSuchProjectException {
     logger.atInfo().log("Getting config for %s...", project.getName());
     Config cfg = config.getProjectPluginConfigWithInheritance(project.getNameKey(), pluginName);
     logger.atInfo().log("Found sections: %s", cfg.getSections());
@@ -41,7 +42,7 @@ class GetConfig implements RestReadView<ProjectResource> {
     result.triciumHost = cfg.getString(HOST_SECTION, null, TRICIUM);
     logger.atInfo().log("Found Tricium host: %s", result.triciumHost);
 
-    return result;
+    return Response.ok(result);
   }
 
   static class TriciumConfig {
