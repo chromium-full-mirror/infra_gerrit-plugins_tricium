@@ -95,7 +95,7 @@ found in the LICENSE file.
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(
           window.tricium.TriciumV1Client.prototype, 'getProgress',
-          () => Promise.reject('simulated getProgress error (expected)'));
+          () => Promise.reject(new Error('simulated getProgress error')));
       const initialTimeoutMs = element._updateIntervalMs;
       await element._update();
       assert.isTrue(element._updateIntervalMs > 2 * initialTimeoutMs);

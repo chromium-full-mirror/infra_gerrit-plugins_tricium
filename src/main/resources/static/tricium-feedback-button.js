@@ -89,7 +89,7 @@
     async reportNotUseful() {
       if (this.disabled) {
         console.warn('reportNotUseful called on disabled button');
-        return Promise.reject();
+        return Promise.reject(new Error('unexpected reportNotUseful call'));
       }
       this.disabled = true;
       try {
@@ -105,7 +105,7 @@
           bubbles: true,
         }));
         this.disabled = false;
-        return Promise.reject();
+        return Promise.reject(new Error('failed reportNotUseful call'));
       }
     },
 

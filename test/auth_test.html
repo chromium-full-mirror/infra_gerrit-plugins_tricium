@@ -5,6 +5,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 
 This test was copied from the buildbucket plugin.
+TODO(crbug.com/912819): Extract common code from both plugins.
 -->
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
 
@@ -81,7 +82,7 @@ This test was copied from the buildbucket plugin.
 
     test('serialized', async () => {
       sandbox.spy(gapi.auth, 'authorize');
-      [actualToken1, actualToken2] = await Promise.all([
+      const [actualToken1, actualToken2] = await Promise.all([
           authenticator.getToken(),
           authenticator.getToken(),
       ]);
@@ -103,10 +104,9 @@ This test was copied from the buildbucket plugin.
   suite('initAuth', () => {
     let sandbox;
     let plugin;
-    let getLoggedInStub;
     let loggedIn;
     let cfg;
-    let accessToken = 'token';
+    const accessToken = 'token';
 
     setup(() => {
       sandbox = sinon.sandbox.create({
@@ -133,9 +133,9 @@ This test was copied from the buildbucket plugin.
         load: (modules, resolve) => resolve(),
       });
 
-      sandbox.stub(window.tricium.Authenticator.prototype, 'getToken', () => ({
-        access_token: accessToken,
-      }));
+      sandbox.stub(
+          window.tricium.Authenticator.prototype,
+          'getToken', () => ({access_token: accessToken}));
     });
 
     teardown(() => {
@@ -152,7 +152,8 @@ This test was copied from the buildbucket plugin.
     test('call initAuth twice', async () => {
       window.tricium.initAuth(plugin);
       assert.throws(
-          () => window.tricium.initAuth(plugin), 'initAuth is called more than once');
+          () => window.tricium.initAuth(plugin),
+          'initAuth is called more than once');
     });
 
     test('getAccessToken before init', async () => {
@@ -174,11 +175,10 @@ This test was copied from the buildbucket plugin.
       assert.isTrue(
           gapi.config.update.calledWith('oauth-flow/proxyUrl', cfg.proxy_url));
 
-      // auth must be loaded after config is updated
+      // `auth` must be loaded after config is updated.
       assert.isTrue(
           gapi.load.withArgs('auth', sinon.match.any)
             .calledAfter(gapi.config.update));
     });
-
   });
 </script>
