@@ -177,5 +177,17 @@ found in the LICENSE file.
       });
       assert.isNaN(client._rpcCode(response));
     });
+
+    test('_normalizeGerritHost strips prefixes', () => {
+      assert.equal(
+          client._normalizeGerritHost('canary-foo-review.googlesource.com'),
+          'foo-review.googlesource.com');
+      assert.equal(
+          client._normalizeGerritHost('polymer2-foo-review.googlesource.com'),
+          'foo-review.googlesource.com');
+      assert.equal(
+          client._normalizeGerritHost('foo-review.googlesource.com'),
+          'foo-review.googlesource.com');
+    });
   });
 </script>

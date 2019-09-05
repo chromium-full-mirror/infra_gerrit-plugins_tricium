@@ -34,7 +34,7 @@
       }
       const request = {
         gerritRevision: {
-          host: this._getGerritHost(),
+          host: this._normalizeGerritHost(window.location.host),
           project: change.project,
           change: change.id,
           gitRef: revision.ref,
@@ -75,6 +75,23 @@
         return await this._parseRpcJson(response);
       }
       throw Error(await this._message(response));
+    }
+
+    /**
+     * Returns the prod version of a Gerrit host string.
+     *
+     * There are "canary" and "polymer2" Gerrit hosts which serve the same
+     * change data. Tricium needs the Gerrit host to fetch the run data,
+     * and Tricium always uses the prod host name.
+     *
+     * Note that there is expected to be at most once prefix, i.e.
+     * we don't need to handle "polymer2-canary-..." hosts.
+     *
+     * @param {string} host A value from window.location.host.
+     * @return {string} Gerrit host string to send to Tricium.
+     */
+    _normalizeGerritHost(host) {
+      return host.replace(/^canary-/, '').replace(/^polymer2-/, '');
     }
 
     /** Checks if the response indicates that a run wasn't found. */
@@ -144,18 +161,6 @@
         body: JSON.stringify(request),
       };
       return await fetch(url, opts);
-    }
-
-    /** @return {string} Gerrit host string to send to Tricium. */
-    _getGerritHost() {
-      // In practice, there are "canary" Gerrit hosts which serve the same
-      // change data as the non-canary version but which may use a newer
-      // version of Gerrit. For convenience, strip the "canary-" part.
-      const host = document.location.host;
-      if (host.startsWith('canary-')) {
-        return host.slice('canary-'.length);
-      }
-      return host;
     }
 
     /** Mockable equivalent of window.tricium.getAccessToken. */
