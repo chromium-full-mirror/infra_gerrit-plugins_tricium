@@ -186,6 +186,9 @@ found in the LICENSE file.
           client._normalizeGerritHost('polymer2-foo-review.googlesource.com'),
           'foo-review.googlesource.com');
       assert.equal(
+          client._normalizeGerritHost('polymer1-foo-review.googlesource.com'),
+          'foo-review.googlesource.com');
+      assert.equal(
           client._normalizeGerritHost('foo-review.googlesource.com'),
           'foo-review.googlesource.com');
     });

@@ -80,9 +80,9 @@
     /**
      * Returns the prod version of a Gerrit host string.
      *
-     * There are "canary" and "polymer2" Gerrit hosts which serve the same
-     * change data. Tricium needs the Gerrit host to fetch the run data,
-     * and Tricium always uses the prod host name.
+     * There are "canary", "polymer1", and "polymer2" Gerrit hosts which
+     * serve the same change data. Tricium needs the Gerrit host to fetch
+     * the run data, and Tricium always uses the prod host name.
      *
      * Note that there is expected to be at most once prefix, i.e.
      * we don't need to handle "polymer2-canary-..." hosts.
@@ -91,7 +91,8 @@
      * @return {string} Gerrit host string to send to Tricium.
      */
     _normalizeGerritHost(host) {
-      return host.replace(/^canary-/, '').replace(/^polymer2-/, '');
+      return host.replace(/^canary-/, '').replace(/^polymer2-/, '').replace(
+        /^polymer1-/, '');
     }
 
     /** Checks if the response indicates that a run wasn't found. */
