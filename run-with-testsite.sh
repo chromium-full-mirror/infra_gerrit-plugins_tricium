@@ -25,13 +25,13 @@ echo "Using ${GERRIT_TESTSITE_DIR} as Gerrit testsite directory."
 pushd "${GERRIT_DIR}"
 
 # We want to force re-build even if only static files changed.
-rm -f bazel-genfiles/plugins/tricium/tricium.jar
+rm -f bazel-bin/plugins/tricium/tricium.jar
 bazel build plugins/tricium
 
 # Copy the built plugin into the testsite directory. The .jar file in the
 # destination directory is set as read-only, so it has to be force-removed.
 rm -f "${GERRIT_TESTSITE_DIR}/plugins/tricium.jar"
-cp bazel-genfiles/plugins/tricium/tricium.jar \
+cp bazel-bin/plugins/tricium/tricium.jar \
     "${GERRIT_TESTSITE_DIR}/plugins/tricium.jar"
 
 # Gerrrit docs say to use the same Java version that Bazel used for the build.
