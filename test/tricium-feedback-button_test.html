@@ -118,6 +118,12 @@ found in the LICENSE file.
       sandbox.restore();
     });
 
+    test('getProjectName gets project name from URL', async () => {
+      sandbox.stub(element, 'getCurrentUrl')
+             .returns('https://chromium-review.googlesource.com/c/chromium/src/+/1893975');
+      assert.equal(element.getProjectName(), 'chromium/src');
+    });
+
     test('reportNotUseful delegates to client', async () => {
       sandbox.stub(window.tricium.TriciumV1Client.prototype,
                    'reportNotUseful', async (comment) => {
