@@ -133,7 +133,7 @@
      *   https://godoc.org/github.com/luci/luci-go/grpc/prpc
      *
      * Note: This could be changed to use the rpc-client element from
-     * https://chromium.googlesource.com/infra/luci/luci-go/+/master/web/inc/rpc/.
+     * https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/web/inc/rpc/.
      * However, that element has extra dependencies expected to be managed via
      * bower and compiled together with vulcanize. It also has more
      * functionality than is required here.

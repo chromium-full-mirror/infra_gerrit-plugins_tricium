@@ -104,4 +104,4 @@ This plugin is configured via the `tricium.config` file present in the repo's
 [1]: https://www.polymer-project.org/1.0/docs/tools/tests
 [2]: https://www.polymer-project.org/1.0/docs/tools/polymer-cli
 [3]: https://gerrit-review.googlesource.com/Documentation/dev-readme.html
-[4]: https://gerrit.googlesource.com/gerrit-fe-dev-helper/+/refs/heads/master/README.md
+[4]: https://gerrit.googlesource.com/gerrit-fe-dev-helper/+/HEAD/README.md
