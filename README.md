@@ -15,20 +15,9 @@ git clone https://chromium.googlesource.com/infra/gerrit-plugins/tricium
 
 ### Running the tests
 
-The unit tests of the plugin are [web-component-tester unit tests][1].
-Dependencies are specified in bower.json and can be installed by running
-`bower install` in this directory. This requires [bower to be
-installed](https://bower.io/#install-bower).
-
-To run the tests, run `wct` from this directory.  See `wct --help`
-for more options.
-
-### Previewing UI with a static server
-
-With a local static web server, such as the one provided by [Polymer CLI][2],
-you can also view and tweak UI interactively.
-
-To install the Polymer tool-set globally, run `npm install -g polymer-cli`.
+```
+npm run wct-test
+```
 
 ### Integration testing with Gerrit
 

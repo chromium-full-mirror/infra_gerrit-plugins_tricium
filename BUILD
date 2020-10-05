@@ -1,3 +1,4 @@
+load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
 load("//tools/bzl:plugin.bzl", "gerrit_plugin")
 load("//tools/bzl:js.bzl", "polygerrit_plugin")
 
@@ -13,11 +14,19 @@ gerrit_plugin(
     resources = glob(["src/main/**/*"]),
 )
 
+rollup_bundle(
+    name = "tricium-bundle",
+    srcs = glob(["src/main/resources/static/*.js"]),
+    entry_point = "src/main/resources/static/tricium.js",
+    rollup_bin = "//tools/node_tools:rollup-bin",
+    sourcemap = "hidden",
+    deps = [
+        "@tools_npm//rollup-plugin-node-resolve",
+    ],
+)
+
 polygerrit_plugin(
     name = "tricium_ui",
-    srcs = glob([
-        "src/main/resources/static/*.html",
-        "src/main/resources/static/*.js",
-    ]),
-    app = "src/main/resources/static/tricium.html",
+    app = "tricium-bundle.js",
+    plugin_name = "tricium",
 )

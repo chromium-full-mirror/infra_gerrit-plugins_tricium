@@ -9,12 +9,7 @@ found in the LICENSE file.
 
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 <script src="../bower_components/web-component-tester/browser.js"></script>
-<script src="../src/main/resources/static/promises.js"></script>
-<script src="../src/main/resources/static/auth.js"></script>
-<script src="../src/main/resources/static/tricium-client.js"></script>
 
-<link rel="import" href="../bower_components/iron-test-helpers/iron-test-helpers.html">
-<link rel="import" href="../src/main/resources/static/tricium-view.html">
 
 <test-fixture id="tricium-view-fixture">
   <template>
@@ -22,7 +17,11 @@ found in the LICENSE file.
   </template>
 </test-fixture>
 
-<script>
+<script type="module">
+  import './common-test-setup.js';
+  import {TriciumV1Client} from '../src/main/resources/static/tricium-client.js';
+  import '../src/main/resources/static/tricium-view.js';
+
   suite('<tricium-view>', () => {
     let element;
     let sandbox;
@@ -30,14 +29,16 @@ found in the LICENSE file.
     setup(() => {
       element = fixture('tricium-view-fixture');
       sandbox = sinon.sandbox.create();
-      sandbox.stub(window.tricium, 'getAccessToken', async () => 'accessToken');
+      element.triciumClient = new TriciumV1Client();
+      sandbox.stub(element.triciumClient, '_getAccessToken',
+          async () => 'accessToken');
     });
 
     teardown(() => {
       sandbox.restore();
     });
 
-    test('merged CL sets revision to last before merge on attached', async () => {
+    test('merged CL sets revision to last before merge on connectedCallback', async () => {
       element.change = {
         change_id: 'Iabc12345def123451234',
         _number: 12345,
@@ -61,7 +62,7 @@ found in the LICENSE file.
         ref: 'refs/changes/45/12345/2',
       };
 
-      element.attached();
+      element.connectedCallback();
 
       assert.deepEqual(element.revision, {
         kind: 'REWORK',
@@ -74,7 +75,7 @@ found in the LICENSE file.
       // Set the start time to some time a long time ago.
       element._startTime = new Date('2018-06-01');
       sandbox.stub(
-          window.tricium.TriciumV1Client.prototype, 'getProgress',
+          element.triciumClient, 'getProgress',
           () => Promise.resolve([{name: 'MyLinter', state: 'PENDING'}]));
       await element._update();
       // We shall not try to update again, if it still appears to be "pending",
@@ -85,7 +86,7 @@ found in the LICENSE file.
     test('_update clears timeout when finished', async () => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(
-          window.tricium.TriciumV1Client.prototype, 'getProgress',
+          element.triciumClient, 'getProgress',
         () => Promise.resolve({runId: '1324', state: 'SUCCESS'}));
       await element._update();
       assert.isNotOk(element._updateTimeoutID);
@@ -94,7 +95,7 @@ found in the LICENSE file.
     test('_update uses exponential back-off on error', async () => {
       assert.isNotOk(element._updateTimeoutID);
       sandbox.stub(
-          window.tricium.TriciumV1Client.prototype, 'getProgress',
+          element.triciumClient, 'getProgress',
           () => Promise.reject(new Error('simulated getProgress error')));
       const initialTimeoutMs = element._updateIntervalMs;
       await element._update();

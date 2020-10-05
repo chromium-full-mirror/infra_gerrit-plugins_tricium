@@ -9,12 +9,6 @@ found in the LICENSE file.
 
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 <script src="../bower_components/web-component-tester/browser.js"></script>
-<script src="../src/main/resources/static/promises.js"></script>
-<script src="../src/main/resources/static/auth.js"></script>
-<script src="../src/main/resources/static/tricium-client.js"></script>
-
-<link rel="import" href="../bower_components/iron-test-helpers/iron-test-helpers.html">
-<link rel="import" href="../src/main/resources/static/tricium-feedback-button.html">
 
 <test-fixture id="tricium-feedback-button-fixture">
   <template>
@@ -22,7 +16,11 @@ found in the LICENSE file.
   </template>
 </test-fixture>
 
-<script>
+<script type="module">
+  import './common-test-setup.js';
+  import {TriciumV1Client} from '../src/main/resources/static/tricium-client.js';
+  import '../src/main/resources/static/tricium-feedback-button.js';
+
   suite('<tricium-feedback-button> init conditions', () => {
     let element;
     let sandbox;
@@ -51,19 +49,19 @@ found in the LICENSE file.
 
     test('init is called with valid comment', () => {
       element.comment = makeExampleComment();
-      element.attached();
+      element.connectedCallback();
       assert.isTrue(element.init.called);
     });
 
     test('init is not called with no comment', () => {
-      element.attached();
+      element.connectedCallback();
       assert.isFalse(element.init.called);
     });
 
     test('init is not called with empty author', () => {
       element.comment = makeExampleComment();
       delete element.comment.author;
-      element.attached();
+      element.connectedCallback();
       assert.isFalse(element.init.called);
     });
 
@@ -71,7 +69,7 @@ found in the LICENSE file.
       element.comment = makeExampleComment();
       delete element.comment.robot_run_id;
       delete element.comment.robot_id;
-      element.attached();
+      element.connectedCallback();
       assert.isFalse(element.init.called);
     });
 
@@ -81,7 +79,7 @@ found in the LICENSE file.
         name: 'Someone',
         email: 'someone@somewhere',
       };
-      element.attached();
+      element.connectedCallback();
       assert.isFalse(element.init.called);
     });
 
@@ -125,7 +123,8 @@ found in the LICENSE file.
     });
 
     test('reportNotUseful delegates to client', async () => {
-      sandbox.stub(window.tricium.TriciumV1Client.prototype,
+      element.triciumClient = new TriciumV1Client();
+      sandbox.stub(element.triciumClient,
                    'reportNotUseful', async (comment) => {
         assert.equal(comment, exampleComment);
         return exampleResponse;
@@ -137,7 +136,8 @@ found in the LICENSE file.
     });
 
     test('reportNotUseful with success, button disabled', async () => {
-      sandbox.stub(window.tricium.TriciumV1Client.prototype,
+      element.triciumClient = new TriciumV1Client();
+      sandbox.stub(element.triciumClient,
                    'reportNotUseful', async (comment) => {
         return exampleResponse;
       });
@@ -150,7 +150,7 @@ found in the LICENSE file.
     });
 
     test('reportNotUseful with failure, button stays enabled', async () => {
-      sandbox.stub(window.tricium.TriciumV1Client.prototype,
+      sandbox.stub(TriciumV1Client.prototype,
                    'reportNotUseful', async (comment) => {
         throw Error('some error');
       });

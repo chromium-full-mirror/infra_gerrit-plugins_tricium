@@ -8,17 +8,17 @@ This test was copied from the buildbucket plugin.
 TODO(crbug.com/912819): Extract common code from both plugins.
 -->
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+<title>auth.js tests</title>
 
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 <script src="../bower_components/web-component-tester/browser.js"></script>
-<script src="./test-util.js"></script>
+<script id="platformJs" src="https://apis.google.com/js/platform.js"></script>
 
-<script src="../src/main/resources/static/promises.js"></script>
-<script src="../src/main/resources/static/auth.js"></script>
-<script src="https://apis.google.com/js/platform.js"></script>
+<script type="module">
+  import {assertRejects} from './test-util.js';
+  import {Authenticator, initAuth, getAccessToken, resetAuthState} from '../src/main/resources/static/auth.js';
 
-<script>
-  const assertRejects = window.tricium.test.assertRejects;
+  const platformJsElement = document.getElementById('platformJs');
 
   suite('auth', () => {
     let sandbox;
@@ -26,8 +26,7 @@ TODO(crbug.com/912819): Extract common code from both plugins.
     let token;
 
     setup(() => {
-      sandbox = sinon.sandbox.create({
-      });
+      sandbox = sinon.sandbox.create({});
       token = {
         access_token: 'token',
         expires_at: Date.now() + 60e3,
@@ -39,7 +38,7 @@ TODO(crbug.com/912819): Extract common code from both plugins.
         },
       });
 
-      authenticator = new window.tricium.Authenticator({
+      authenticator = new Authenticator({
         client_id: 'client-id',
         email: 'jane@example.com',
       });
@@ -49,55 +48,55 @@ TODO(crbug.com/912819): Extract common code from both plugins.
       sandbox.restore();
     });
 
-    test('basic', async () => {
+    test('getToken returns expected token object', async () => {
       const actualToken = await authenticator.getToken();
       assert.equal(actualToken, token);
     });
 
-    test('no access token', async () => {
+    test('getToken rejects when there is no access_token', async () => {
       token.access_token = null;
       assertRejects(authenticator.getToken());
     });
 
-    test('response error', async () => {
+    test('getToken rejects if there is an error', async () => {
       token.error = 'bad';
       assertRejects(authenticator.getToken(), 'bad');
     });
 
-    test('no expires_at', async () => {
+    test('getToken rejects when token has no expiry date', async () => {
       token.expires_at = null;
       assertRejects(authenticator.getToken());
     });
 
-    test('expired', async () => {
+    test('getToken rejects when token is expired', async () => {
       token.access_token = 1543620640;
       assertRejects(authenticator.getToken());
     });
 
-    test('timeout', async () => {
+    test('getToken rejects when authorize times out', async () => {
       const forever = new Promise(() => {});
       sandbox.stub(gapi.auth, 'authorize', forever);
       assertRejects(authenticator.getToken(), 'timeout');
     });
 
-    test('serialized', async () => {
-      sandbox.spy(gapi.auth, 'authorize');
-      const [actualToken1, actualToken2] = await Promise.all([
-          authenticator.getToken(),
-          authenticator.getToken(),
-      ]);
-      assert.equal(actualToken1, token);
-      assert.equal(actualToken2, token);
-      assert.isTrue(gapi.auth.authorize.calledOnce);
-    });
-
-    test('caches token', async () => {
+    test('getToken uses cached token', async () => {
       sandbox.spy(gapi.auth, 'authorize');
       const actualToken1 = await authenticator.getToken();
       const actualToken2 = await authenticator.getToken();
       assert.isTrue(gapi.auth.authorize.calledOnce);
       assert.equal(actualToken1, token);
       assert.equal(actualToken2, token);
+    });
+
+    test('getToken uses cached token for two async calls', async () => {
+      sandbox.spy(gapi.auth, 'authorize');
+      const [actualToken1, actualToken2] = await Promise.all([
+        authenticator.getToken(),
+        authenticator.getToken(),
+      ]);
+      assert.equal(actualToken1, token);
+      assert.equal(actualToken2, token);
+      assert.isTrue(gapi.auth.authorize.calledOnce);
     });
   });
 
@@ -133,52 +132,51 @@ TODO(crbug.com/912819): Extract common code from both plugins.
         load: (modules, resolve) => resolve(),
       });
 
-      sandbox.stub(
-          window.tricium.Authenticator.prototype,
-          'getToken', () => ({access_token: accessToken}));
+      sandbox.stub(Authenticator.prototype, 'getToken', () => ({
+        access_token: accessToken,
+      }));
     });
 
     teardown(() => {
       sandbox.restore();
-      window.tricium.resetAuthState();
+      resetAuthState();
     });
 
-    test('basic', async () => {
-      window.tricium.initAuth(plugin);
-      const actualAccessToken = await window.tricium.getAccessToken();
+    test('initAuth sets access token which can then be gotten', async () => {
+      initAuth(plugin, platformJsElement);
+      const actualAccessToken = await getAccessToken();
       assert.equal(actualAccessToken, accessToken);
     });
 
-    test('call initAuth twice', async () => {
-      window.tricium.initAuth(plugin);
+    test('initAuth throws if called twice', async () => {
+      initAuth(plugin, platformJsElement);
       assert.throws(
-          () => window.tricium.initAuth(plugin),
-          'initAuth is called more than once');
+        () => initAuth(plugin, platformJsElement), 'initAuth is called more than once');
     });
 
-    test('getAccessToken before init', async () => {
-      assertRejects(window.tricium.getAccessToken(), 'initAuth was not called');
+    test('getAccessToken rejects if called before init', async () => {
+      assertRejects(getAccessToken(), 'initAuth was not called');
     });
 
-    test('oauth config', async () => {
+    test('initAuth sets up gapi', async () => {
       sandbox.spy(gapi.config, 'update');
       sandbox.spy(gapi, 'load');
       cfg = {
         auth_url: 'https://example.com/auth',
         proxy_url: 'https://example.com/proxy',
       };
-      window.tricium.initAuth(plugin);
-      await window.tricium.getAccessToken();
+      initAuth(plugin, platformJsElement);
+      await getAccessToken();
 
       assert.isTrue(
-          gapi.config.update.calledWith('oauth-flow/authUrl', cfg.auth_url));
+        gapi.config.update.calledWith('oauth-flow/authUrl', cfg.auth_url));
       assert.isTrue(
-          gapi.config.update.calledWith('oauth-flow/proxyUrl', cfg.proxy_url));
+        gapi.config.update.calledWith('oauth-flow/proxyUrl', cfg.proxy_url));
 
       // `auth` must be loaded after config is updated.
       assert.isTrue(
-          gapi.load.withArgs('auth', sinon.match.any)
-            .calledAfter(gapi.config.update));
+        gapi.load.withArgs('auth', sinon.match.any)
+        .calledAfter(gapi.config.update));
     });
   });
 </script>
