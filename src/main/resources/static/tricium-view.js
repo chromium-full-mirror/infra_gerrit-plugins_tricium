@@ -201,6 +201,8 @@ class TriciumView extends Polymer.Element {
   }
 
   _handleFileBugTap(e) {
+    // Warning: window.open is safe only if the arguments are hard-coded and
+    // unchanged.
     window.open(
         ('https://bugs.chromium.org/p/chromium/issues/entry' +
          '?components=Infra%3EPlatform%3ETricium'),
