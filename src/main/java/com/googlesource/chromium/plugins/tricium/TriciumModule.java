@@ -8,15 +8,16 @@ import static com.google.gerrit.server.project.ProjectResource.PROJECT_KIND;
 
 import com.google.gerrit.extensions.registration.DynamicSet;
 import com.google.gerrit.extensions.restapi.RestApiModule;
-import com.google.gerrit.extensions.webui.JavaScriptPlugin;
 import com.google.gerrit.extensions.webui.WebUiPlugin;
 
 public class TriciumModule extends RestApiModule {
 
   @Override
   protected void configure() {
-    // Point to the JavaScript that provides the main functionality of this plugin.
-    DynamicSet.bind(binder(), WebUiPlugin.class).toInstance(new JavaScriptPlugin("tricium.html"));
+    // Point to the JavaScript that provides the main functionality of this
+    // plugin.
+    DynamicSet.bind(binder(), WebUiPlugin.class).toInstance(
+        WebUiPlugin.js("tricium.js"));
 
     // Register the config endpoint used by the JavaScript client code.
     get(PROJECT_KIND, "config").to(GetConfig.class);
