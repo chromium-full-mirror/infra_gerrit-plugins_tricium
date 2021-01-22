@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {triciumFeedbackButtonTemplate} from './tricium-feedback-button.html.js';
+import {TriciumV1Client} from './tricium-client.js';
 
 class TriciumFeedbackButton extends Polymer.Element {
   static get template() {
