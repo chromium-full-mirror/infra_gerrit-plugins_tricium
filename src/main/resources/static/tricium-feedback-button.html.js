@@ -10,6 +10,7 @@ export const triciumFeedbackButtonTemplate = Polymer.html`
   </style>
   <gr-button
       class="action"
+      hidden$="[[hidden]]"
       on-tap="reportNotUseful"
       disabled$="[[disabled]]"
       link>[[buttonText]]</gr-button>

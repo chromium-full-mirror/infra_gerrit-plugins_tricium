@@ -19,6 +19,10 @@ class TriciumFeedbackButton extends Polymer.Element {
       triciumClient: Object,
       plugin: Object,
       comment: Object,
+      hidden: {
+        type: Boolean,
+        value: true,
+      },
       disabled: {
         type: Boolean,
         value: true,
@@ -68,6 +72,7 @@ class TriciumFeedbackButton extends Polymer.Element {
         `${encodeURIComponent(pluginName)}~config`);
     if (config && config.triciumHost) {
       this.triciumHost = config.triciumHost;
+      this.hidden = false;
       this.disabled = false;
       this.triciumClient = new TriciumV1Client(this.triciumHost);
     } else {
