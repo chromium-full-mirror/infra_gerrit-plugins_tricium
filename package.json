@@ -18,7 +18,7 @@
     "eslint-plugin-html": "^6.1.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsdoc": "^33.1.0",
-    "polymer-bridges": "file:../../polymer-bridges/",
+    "polymer-bridges": "git+https://gerrit.googlesource.com/polymer-bridges.git",
     "polymer-cli": "^1.9.11",
     "wct-browser-legacy": "^1.0.2",
     "web-component-tester": "^6.9.2"
