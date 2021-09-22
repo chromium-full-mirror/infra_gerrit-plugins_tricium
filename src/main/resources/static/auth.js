@@ -32,8 +32,7 @@ export async function getAccessToken() {
   if (!globalAuthenticatorPromise) {
     throw new Error('initAuth was not called');
   }
-  console.debug(
-      'bb: Awaiting globalAuthenticatorPromise', globalAuthenticatorPromise);
+  console.debug('bb: Awaiting globalAuthenticatorPromise');
   const authenticator = await globalAuthenticatorPromise;
   console.debug('bb: Resolved globalAuthenticatorPromise');
   if (!authenticator) {
@@ -42,7 +41,7 @@ export async function getAccessToken() {
   try {
     console.debug('bb: Awaiting authenticator.getToken()');
     const token = await authenticator.getToken();
-    console.debug('bb: Resolved token', token);
+    console.debug('bb: Resolved token');
     return token.access_token;
   } catch (err) {
     console.warn('Failed to fetch access token', err);
@@ -53,7 +52,7 @@ export async function getAccessToken() {
 /**
  * Provides an OAuth access token.
  *
- * Assumes gapi.auth is initialized.
+ * Assumes gapi.auth2 is loaded.
  * For internal use only, use getAccessToken instead.
  */
 export class Authenticator {
@@ -77,7 +76,7 @@ export class Authenticator {
     if (!this._token) {
       console.debug('bb: Awaiting _fetchToken()');
       this._token = await this._fetchToken();
-      console.debug('bb: Resolved _fetchToken()', this._token);
+      console.debug('bb: Resolved _fetchToken()');
     }
     return this._token;
   }
@@ -111,15 +110,15 @@ export class Authenticator {
    *     is not logged in. Rejects on an error or timeout.
    */
   async _fetchTokenUnserialized(timeoutMs) {
-    // Call gapi.auth.authorize.
+    // Call gapi.auth2.authorize.
     const opts = {
       client_id: this.config.client_id,
-      immediate: true,
+      prompt: 'none',
       scope: 'email',
       login_hint: this.config.email,
     };
     const authorizePromise = new Promise(
-        resolve => window.gapi.auth.authorize(opts, resolve));
+        resolve => window.gapi.auth2.authorize(opts, resolve));
     const token = await addTimeout(authorizePromise, timeoutMs);
 
     // Check response.
@@ -166,7 +165,7 @@ export function initAuth(plugin, platformJsElement) {
     throw new Error('initAuth is called more than once');
   }
   globalAuthenticatorPromise = _initAuth(plugin, platformJsElement);
-  console.debug('bb: globalAuthenticatorPromise', globalAuthenticatorPromise);
+  console.debug('bb: globalAuthenticatorPromise');
 }
 
 /** Implements initAuth. Must be called at most once.
@@ -204,19 +203,19 @@ async function _initAuth(plugin, platformJsElement) {
   console.debug('bb: Awaiting for /accounts/self/oauthconfig');
   const cfg = await plugin.restApi().get('/accounts/self/oauthconfig');
   console.debug('bb: Resolved /accounts/self/oauthconfig', cfg);
-  console.debug('bb: Awaiting for _initGapiAuth(cfg)');
-  await _initGapiAuth(cfg);
-  console.debug('bb: Resolved _initGapiAuth(cfg)');
+  console.debug('bb: Awaiting for _loadGapiAuth(cfg)');
+  await _loadGapiAuth(cfg);
+  console.debug('bb: Resolved _loadGapiAuth(cfg)');
   return new Authenticator(cfg);
 }
 
 /**
- * Initializes global gapi auth.
+ * Loads global gapi auth.
  *
  * @param {Object} cfg OAuth config loaded from Gerrit.
- * @return {Promise} Resolves when gapi.auth is initialized.
+ * @return {Promise} Resolves when gapi.auth2 is loaded.
  */
-async function _initGapiAuth(cfg) {
+async function _loadGapiAuth(cfg) {
   const gapi = window.gapi;
 
   // Load "config" library and configure it according to cfg.
@@ -230,10 +229,8 @@ async function _initGapiAuth(cfg) {
     gapi.config.update('oauth-flow/proxyUrl', cfg.proxy_url);
   }
 
-  // Load "auth" library only after configuring URLs, and initialize it.
-  console.debug('bb: Loading "auth" and initializing it');
-  await new Promise(resolve => gapi.load('auth', resolve));
-  console.debug('bb: Resolved gapi.load("auth")');
-  await new Promise(resolve => gapi.auth.init(resolve));
-  console.debug('bb: Resolved gapi.auth.init');
+  // Load "auth2" library only after configuring URLs.
+  console.debug('bb: Loading "auth2"');
+  await new Promise(resolve => gapi.load('auth2', resolve));
+  console.debug('bb: Resolved gapi.load("auth2")');
 }

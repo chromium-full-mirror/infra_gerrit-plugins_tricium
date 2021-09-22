@@ -33,7 +33,7 @@ TODO(crbug.com/912819): Extract common code from both plugins.
       };
 
       sandbox.stub(window, 'gapi', {
-        auth: {
+        auth2: {
           authorize: (opt, resolve) => resolve(token),
         },
       });
@@ -75,28 +75,28 @@ TODO(crbug.com/912819): Extract common code from both plugins.
 
     test('getToken rejects when authorize times out', async () => {
       const forever = new Promise(() => {});
-      sandbox.stub(gapi.auth, 'authorize', forever);
+      sandbox.stub(gapi.auth2, 'authorize', forever);
       assertRejects(authenticator.getToken(), 'timeout');
     });
 
     test('getToken uses cached token', async () => {
-      sandbox.spy(gapi.auth, 'authorize');
+      sandbox.spy(gapi.auth2, 'authorize');
       const actualToken1 = await authenticator.getToken();
       const actualToken2 = await authenticator.getToken();
-      assert.isTrue(gapi.auth.authorize.calledOnce);
+      assert.isTrue(gapi.auth2.authorize.calledOnce);
       assert.equal(actualToken1, token);
       assert.equal(actualToken2, token);
     });
 
     test('getToken uses cached token for two async calls', async () => {
-      sandbox.spy(gapi.auth, 'authorize');
+      sandbox.spy(gapi.auth2, 'authorize');
       const [actualToken1, actualToken2] = await Promise.all([
         authenticator.getToken(),
         authenticator.getToken(),
       ]);
       assert.equal(actualToken1, token);
       assert.equal(actualToken2, token);
-      assert.isTrue(gapi.auth.authorize.calledOnce);
+      assert.isTrue(gapi.auth2.authorize.calledOnce);
     });
   });
 
@@ -122,7 +122,7 @@ TODO(crbug.com/912819): Extract common code from both plugins.
       };
 
       sandbox.stub(window, 'gapi', {
-        auth: {
+        auth2: {
           init: (resolve) => resolve(),
         },
         config: {
@@ -175,7 +175,7 @@ TODO(crbug.com/912819): Extract common code from both plugins.
 
       // `auth` must be loaded after config is updated.
       assert.isTrue(
-        gapi.load.withArgs('auth', sinon.match.any)
+        gapi.load.withArgs('auth2', sinon.match.any)
         .calledAfter(gapi.config.update));
     });
   });
