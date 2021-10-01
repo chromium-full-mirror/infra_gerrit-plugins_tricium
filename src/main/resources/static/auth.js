@@ -145,7 +145,7 @@ export class Authenticator {
     if (!token.expires_at) {
       return false;
     }
-    const expiration = new Date(parseInt(token.expires_at, 10) * 1000);
+    const expiration = new Date(parseInt(token.expires_at, 10));
     if (Date.now() >= expiration) {
       return false;
     }
