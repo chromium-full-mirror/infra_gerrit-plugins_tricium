@@ -90,7 +90,7 @@ class TriciumFeedbackButton extends Polymer.Element {
   /** Fetch the project name for the current change. */
   getProjectName() {
     // We use a roundabout way of getting the project name because we don't
-    // have access to the change object like the tricium-view element does.
+    // have access to the change object.
     // TODO(qyearsley): Find a better way to get the project name.
     const url = this.getCurrentUrl();
     // Get the project name between the /c/ and /+/ fields in the URL

@@ -9,13 +9,10 @@ document.head.appendChild(platformJsElement);
 
 import {initAuth} from './auth.js';
 import {TriciumV1Client} from './tricium-client.js';
-import './tricium-view.js';
 import './tricium-feedback-button.js';
 
 Gerrit.install(async (plugin) => {
     initAuth(plugin, platformJsElement);
-    plugin.registerCustomComponent(
-        'change-view-integration', 'tricium-view');
     plugin.registerCustomComponent(
         'robot-comment-controls', 'tricium-feedback-button');
 });
