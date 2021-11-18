@@ -2,12 +2,23 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {triciumFeedbackButtonTemplate} from './tricium-feedback-button.html.js';
 import {TriciumV1Client} from './tricium-client.js';
 
 class TriciumFeedbackButton extends Polymer.Element {
   static get template() {
-    return triciumFeedbackButtonTemplate
+    return Polymer.html`
+      <style>
+        #buglink {
+          color: var(--link-color);
+        }
+      </style>
+      <gr-button
+          class="action"
+          hidden$="[[hidden]]"
+          on-tap="reportNotUseful"
+          disabled$="[[disabled]]"
+          link>[[buttonText]]</gr-button>
+      <a id="buglink" href="[[bugLinkURL]]" target="_blank" hidden>File a Bug</a>`;
   }
   static get is() {
     return 'tricium-feedback-button';
