@@ -1,17 +1,41 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 // This was copied from the buildbucket plugin.
 // TODO(crbug.com/928553): Move this to a separate plugin.
 
-import {addTimeout} from './promises.js';
+import {PluginApi} from '@gerritcodereview/typescript-api/plugin';
+import {addTimeout} from './promises';
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    gapi: any;
+  }
+}
+
+export declare interface Token {
+  access_token: string | null;
+  expires_at: number | null;
+  error?: string;
+}
+
+export declare interface OAuthConfig {
+  auth_url: string;
+  proxy_url: string;
+  client_id: string;
+  email: string;
+}
 
 /**
  * Implements authentication layer, in particular global
  * getAccessToken function.
  */
-let globalAuthenticatorPromise = null;
+let globalAuthenticatorPromise: Promise<Authenticator | null> | null = null;
 
 /**
  * Used in tests to reset the auth configuration.
@@ -26,23 +50,23 @@ export function resetAuthState() {
  * For anonymous requests, or when the token could not be fetched, for
  * example due to timeout, then null is returned.
  *
- * @returns {string?} access token to use in requests.
+ * @returns access token to use in requests.
  */
-export async function getAccessToken() {
+export async function getAccessToken(): Promise<string | null> {
   if (!globalAuthenticatorPromise) {
     throw new Error('initAuth was not called');
   }
-  console.debug('bb: Awaiting globalAuthenticatorPromise');
+  console.info('bb: Awaiting globalAuthenticatorPromise');
   const authenticator = await globalAuthenticatorPromise;
-  console.debug('bb: Resolved globalAuthenticatorPromise');
+  console.info('bb: Resolved globalAuthenticatorPromise');
   if (!authenticator) {
     return null;
   }
   try {
-    console.debug('bb: Awaiting authenticator.getToken()');
+    console.info('bb: Awaiting authenticator.getToken()');
     const token = await authenticator.getToken();
-    console.debug('bb: Resolved token');
-    return token.access_token;
+    console.info('bb: Resolved token');
+    return token?.access_token || null;
   } catch (err) {
     console.warn('Failed to fetch access token', err);
     return null;
@@ -56,60 +80,66 @@ export async function getAccessToken() {
  * For internal use only, use getAccessToken instead.
  */
 export class Authenticator {
-  constructor(config) {
+  config: OAuthConfig;
+
+  token: Token | null;
+
+  currentFetchTokenPromise: Promise<Token | null> | null;
+
+  constructor(config: OAuthConfig) {
     this.config = config;
-    this._token = null;
-    this._currentFetchTokenPromise = null;
+    this.token = null;
+    this.currentFetchTokenPromise = null;
   }
 
   /**
    * Returns an auth token.
    * The token is cached for the duration of its TTL.
    *
-   * @returns {string?} auth token to use for requests.
+   * @returns auth token to use for requests.
    */
-  async getToken() {
-    if (!this._isValidToken(this._token)) {
-      this._token = null;
+  async getToken(): Promise<Token | null> {
+    if (!this.isValidToken(this.token)) {
+      this.token = null;
     }
 
-    if (!this._token) {
-      console.debug('bb: Awaiting _fetchToken()');
-      this._token = await this._fetchToken();
-      console.debug('bb: Resolved _fetchToken()');
+    if (!this.token) {
+      console.info('bb: Awaiting fetchToken()');
+      this.token = await this.fetchToken();
+      console.info('bb: Resolved fetchToken()');
     }
-    return this._token;
+    return this.token;
   }
 
   /**
    * Fetches a new OAuth token using gapi.
    *
-   * @param {number=} timeoutMs Milliseconds before timeout, can be specified in
+   * @param timeoutMs Milliseconds before timeout, can be specified in
    *     unit tests.
-   * @returns {Promise<Object?>} Resolves to a token object or null if the user
-   *     is not logged in. Rejects on an error or timeout.
+   * @returns Promise resolving to a token object. Rejects on an error, timeout,
+   *     or if the user is not logged in.
    */
-  async _fetchToken(timeoutMs=10000) {
-    if (this._currentFetchTokenPromise) {
-      return await this._currentFetchTokenPromise;
+  async fetchToken(timeoutMs = 10000): Promise<Token | null> {
+    if (this.currentFetchTokenPromise) {
+      return await this.currentFetchTokenPromise;
     }
 
-    this._currentFetchTokenPromise = this._fetchTokenUnserialized(timeoutMs);
+    this.currentFetchTokenPromise = this.fetchTokenUnserialized(timeoutMs);
     try {
-      return await this._currentFetchTokenPromise;
+      return await this.currentFetchTokenPromise;
     } finally {
-      this._currentFetchTokenPromise = null;
+      this.currentFetchTokenPromise = null;
     }
   }
 
-  /** Implements _fetchToken.
+  /** Implements fetchToken.
    *
-   * @param {number} timeoutMs Milliseconds before timeout, can be specified in
+   * @param timeoutMs Milliseconds before timeout, can be specified in
    *     unit tests.
-   * @returns {Promise<Object?>} Resolves to a token object or null if the user
-   *     is not logged in. Rejects on an error or timeout.
+   * @returns Promise resolving to a token object. Rejects on an error, timeout,
+   *     or if the user is not logged in.
    */
-  async _fetchTokenUnserialized(timeoutMs) {
+  async fetchTokenUnserialized(timeoutMs: number): Promise<Token> {
     // Call gapi.auth2.authorize.
     const opts = {
       client_id: this.config.client_id,
@@ -117,15 +147,16 @@ export class Authenticator {
       scope: 'email',
       login_hint: this.config.email,
     };
-    const authorizePromise = new Promise(
-        resolve => window.gapi.auth2.authorize(opts, resolve));
+    const authorizePromise = new Promise(resolve =>
+      window.gapi.auth2.authorize(opts, resolve)
+    );
     const token = await addTimeout(authorizePromise, timeoutMs);
 
     // Check response.
     if (token.error) {
       throw new Error(token.error);
     }
-    if (!this._isValidToken(token)) {
+    if (!this.isValidToken(token)) {
       throw new Error('Received an invalid token');
     }
     return token;
@@ -134,19 +165,19 @@ export class Authenticator {
   /**
    * Validates the given token object.
    *
-   * @param {Object} token A token object, see https://goo.gl/HZH4Nq.
-   * @return {boolean} True if valid.
+   * @param token A token object, see https://goo.gl/HZH4Nq.
+   * @return True if valid.
    */
-  _isValidToken(token) {
-    if (!token || !token.access_token) {
+  isValidToken(token: Token | null): boolean {
+    if (!token?.access_token) {
       return false;
     }
 
     if (!token.expires_at) {
       return false;
     }
-    const expiration = new Date(parseInt(token.expires_at, 10));
-    if (Date.now() >= expiration) {
+    const expiration = new Date(parseInt(token.expires_at.toString(10), 10));
+    if (Date.now() >= expiration.getTime()) {
       return false;
     }
 
@@ -156,36 +187,40 @@ export class Authenticator {
 
 /** Initializes authentication. Must be called at most once.
  *
- * @param {Object} plugin Plugin object given by gerrit on Gerrit.install.
- * @param {HTMLScriptElement} platformJsElement Script element where platform.js
- *     is loaded.
+ * @param plugin Plugin object given by gerrit on Gerrit.install.
+ * @param platformJsElement Script element where platform.js is loaded.
  */
-export function initAuth(plugin, platformJsElement) {
+export function initAuth(
+  plugin: PluginApi,
+  platformJsElement: HTMLScriptElement
+) {
   if (globalAuthenticatorPromise) {
     throw new Error('initAuth is called more than once');
   }
   globalAuthenticatorPromise = _initAuth(plugin, platformJsElement);
-  console.debug('bb: globalAuthenticatorPromise');
+  console.info('bb: globalAuthenticatorPromise');
 }
 
 /** Implements initAuth. Must be called at most once.
  *
- * @param {Object} plugin Plugin object given by gerrit on Gerrit.install.
- * @param {HTMLScriptElement} platformJsElement Script element where platform.js
- *     is loaded.
+ * @param plugin Plugin object given by gerrit on Gerrit.install.
+ * @param platformJsElement Script element where platform.js is loaded.
  */
-async function _initAuth(plugin, platformJsElement) {
+async function _initAuth(
+  plugin: PluginApi,
+  platformJsElement: HTMLScriptElement
+): Promise<Authenticator | null> {
   // Cannot load OAuth config if the user is not logged in.
-  console.debug('bb: Awaiting plugin.restApi().getLoggedIn()');
+  console.info('bb: Awaiting plugin.restApi().getLoggedIn()');
   const loggedIn = await plugin.restApi().getLoggedIn();
-  console.debug('bb: Resolved plugin.restApi().getLoggedIn()', loggedIn);
+  console.info('bb: Resolved plugin.restApi().getLoggedIn()', loggedIn);
   if (!loggedIn) {
-    console.debug('bb: Not logged in');
+    console.info('bb: Not logged in');
     return null;
   }
 
   // Wait for platform.js to load.
-  console.debug('bb: Awaiting for platform.js to load', platformJsElement);
+  console.info('bb: Awaiting for platform.js to load', platformJsElement);
   const loaded = await new Promise(resolve => {
     // window.gapi is set by platform.js.
     if (window.gapi) {
@@ -195,33 +230,35 @@ async function _initAuth(plugin, platformJsElement) {
     platformJsElement.onerror = () => resolve(false);
   });
   if (!loaded) {
-    console.debug('bb: platform.js failed to load.');
+    console.info('bb: platform.js failed to load.');
     return null;
   }
-  console.debug('bb: platform.js loaded', loaded);
+  console.info('bb: platform.js loaded', loaded);
 
-  console.debug('bb: Awaiting for /accounts/self/oauthconfig');
-  const cfg = await plugin.restApi().get('/accounts/self/oauthconfig');
-  console.debug('bb: Resolved /accounts/self/oauthconfig', cfg);
-  console.debug('bb: Awaiting for _loadGapiAuth(cfg)');
-  await _loadGapiAuth(cfg);
-  console.debug('bb: Resolved _loadGapiAuth(cfg)');
+  console.info('bb: Awaiting for /accounts/self/oauthconfig');
+  const cfg: OAuthConfig = await plugin
+    .restApi()
+    .get('/accounts/self/oauthconfig');
+  console.info('bb: Resolved /accounts/self/oauthconfig', cfg);
+  console.info('bb: Awaiting for loadGapiAuth(cfg)');
+  await loadGapiAuth(cfg);
+  console.info('bb: Resolved loadGapiAuth(cfg)');
   return new Authenticator(cfg);
 }
 
 /**
  * Loads global gapi auth.
  *
- * @param {Object} cfg OAuth config loaded from Gerrit.
- * @return {Promise} Resolves when gapi.auth2 is loaded.
+ * @param cfg OAuth config loaded from Gerrit.
+ * @return Promise resolving when gapi.auth2 is loaded.
  */
-async function _loadGapiAuth(cfg) {
+async function loadGapiAuth(cfg: OAuthConfig): Promise<void> {
   const gapi = window.gapi;
 
   // Load "config" library and configure it according to cfg.
-  console.debug('bb: Awaiting for gapi.load("config_min")');
+  console.info('bb: Awaiting for gapi.load("config_min")');
   await new Promise(resolve => gapi.load('config_min', resolve));
-  console.debug('bb: Resolved gapi.load("config_min")');
+  console.info('bb: Resolved gapi.load("config_min")');
   if (cfg.auth_url) {
     gapi.config.update('oauth-flow/authUrl', cfg.auth_url);
   }
@@ -230,7 +267,7 @@ async function _loadGapiAuth(cfg) {
   }
 
   // Load "auth2" library only after configuring URLs.
-  console.debug('bb: Loading "auth2"');
+  console.info('bb: Loading "auth2"');
   await new Promise(resolve => gapi.load('auth2', resolve));
-  console.debug('bb: Resolved gapi.load("auth2")');
+  console.info('bb: Resolved gapi.load("auth2")');
 }

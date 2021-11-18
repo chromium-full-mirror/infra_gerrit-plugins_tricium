@@ -1,6 +1,9 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 /**
  * Implements Promise utility functions.
@@ -11,34 +14,28 @@
 /**
  * Asserts that the given promise will rejected.
  *
- * @param {Error|string|RegExp} expectedReason Expected rejection reason.
+ * @param expectedReason Expected rejection reason.
  *   If RegExp or string, then rejection reason is expected to have message
  *   property (like Error) that matches the expected reason.
  */
-export async function assertRejects(promise, expectedReason = null) {
+export async function assertRejects(
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  promise: Promise<any>,
+  expectedReason: Error | string | RegExp | null = null
+) {
   try {
     await promise;
     assert.fail('exception', 'no exception');
   } catch (actualReason) {
     if (expectedReason) {
+      const message = String(actualReason);
       if (expectedReason instanceof RegExp) {
-        assert.match(actualReason.message, expectedReason);
-      } else if (typeof expectedReason == 'string') {
-        assert.equal(actualReason.message, expectedReason);
+        assert.match(message, expectedReason);
+      } else if (typeof expectedReason === 'string') {
+        assert.equal(message, expectedReason);
       } else {
         assert.deepEqual(actualReason, expectedReason);
       }
     }
   }
-}
-
-// deepFreeze freezes all objects references by obj.
-export function deepFreeze(obj) {
-  for (const p of Object.keys(obj)) {
-    const v = obj[p];
-    if (typeof v == 'object' && v !== null) {
-      deepFreeze(v);
-    }
-  }
-  return Object.freeze(obj);
 }

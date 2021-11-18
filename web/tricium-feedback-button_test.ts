@@ -1,98 +1,91 @@
-<!DOCTYPE html>
-<!--
-Copyright 2018 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
--->
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-<title>tricium-feedback-button</title>
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
-<script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-<script src="../node_modules/web-component-tester/browser.js"></script>
+import './test/test-setup';
+import {
+  TriciumV1Client,
+  RobotCommentInfo,
+  ReportNotUsefulResponse,
+} from './tricium-client';
+import './tricium-feedback-button';
+import {TriciumFeedbackButton} from './tricium-feedback-button';
 
-<test-fixture id="tricium-feedback-button-fixture">
-  <template>
-    <tricium-feedback-button></tricium-feedback-button>
-  </template>
-</test-fixture>
+suite('<tricium-feedback-button> init conditions', () => {
+  const element: TriciumFeedbackButton = new TriciumFeedbackButton();
+  let initSpy: sinon.SinonSpy;
 
-<script type="module">
-  import './common-test-setup.js';
-  import {TriciumV1Client} from '../src/main/resources/static/tricium-client.js';
-  import '../src/main/resources/static/tricium-feedback-button.js';
+  function makeExampleComment(): RobotCommentInfo {
+    return {
+      id: '1234_abcd',
+      robot_run_id: '2345',
+      robot_id: 'Spacey/Mixed',
+      message: 'mixed whitespace',
+      author: {
+        name: 'Tricium',
+        email: 'tricium-dev@appspot.gserviceaccount.com',
+      },
+      properties: {
+        tricium_comment_uuid: 'abcd1234-abcd1234',
+      },
+    };
+  }
 
-  suite('<tricium-feedback-button> init conditions', () => {
-    let element;
-    let sandbox;
-
-    function makeExampleComment() {
-      return {
-        id: '1234_abcd',
-        robot_run_id: '2345',
-        robot_id: 'Spacey/Mixed',
-        message: 'mixed whitespace',
-        author: {
-          name: 'Tricium',
-          email: 'tricium-dev@appspot.gserviceaccount.com',
-        },
-        properties: {
-          tricium_comment_uuid: 'abcd1234-abcd1234',
-        },
-      };
-    }
-
-    setup(() => {
-      element = fixture('tricium-feedback-button-fixture');
-      element.init = sinon.spy();
-      sandbox = sinon.sandbox.create();
-    });
-
-    test('init is called with valid comment', () => {
-      element.comment = makeExampleComment();
-      element.connectedCallback();
-      assert.isTrue(element.init.called);
-    });
-
-    test('init is not called with no comment', () => {
-      element.connectedCallback();
-      assert.isFalse(element.init.called);
-    });
-
-    test('init is not called with empty author', () => {
-      element.comment = makeExampleComment();
-      delete element.comment.author;
-      element.connectedCallback();
-      assert.isFalse(element.init.called);
-    });
-
-    test('init is not called with non-robot comment', () => {
-      element.comment = makeExampleComment();
-      delete element.comment.robot_run_id;
-      delete element.comment.robot_id;
-      element.connectedCallback();
-      assert.isFalse(element.init.called);
-    });
-
-    test('init is not called with non-tricium comment', () => {
-      element.comment = makeExampleComment();
-      element.comment.author = {
-        name: 'Someone',
-        email: 'someone@somewhere',
-      };
-      element.connectedCallback();
-      assert.isFalse(element.init.called);
-    });
-
-    teardown(() => {
-      sandbox.restore();
-    });
+  setup(() => {
+    initSpy = sinon.spy(element, 'init');
   });
 
-  suite('<tricium-feedback-button> report behavior', () => {
-    let element;
-    let sandbox;
+  teardown(() => {
+    initSpy.restore();
+  });
 
-    const exampleComment = Object.freeze({
+  test('init is called with valid comment', () => {
+    element.comment = makeExampleComment();
+    element.connectedCallback();
+    assert.isTrue(initSpy.called);
+  });
+
+  test('init is not called with no comment', () => {
+    element.comment = undefined;
+    element.connectedCallback();
+    assert.isFalse(initSpy.called);
+  });
+
+  test('init is not called with empty author', () => {
+    element.comment = makeExampleComment();
+    delete element.comment.author;
+    element.connectedCallback();
+    assert.isFalse(initSpy.called);
+  });
+
+  test('init is not called with non-robot comment', () => {
+    element.comment = makeExampleComment();
+    delete element.comment.robot_run_id;
+    delete element.comment.robot_id;
+    element.connectedCallback();
+    assert.isFalse(initSpy.called);
+  });
+
+  test('init is not called with non-tricium comment', () => {
+    element.comment = makeExampleComment();
+    element.comment.author = {
+      name: 'Someone',
+      email: 'someone@somewhere',
+    };
+    element.connectedCallback();
+    assert.isFalse(initSpy.called);
+  });
+});
+
+suite('<tricium-feedback-button> report behavior', () => {
+  const element: TriciumFeedbackButton = new TriciumFeedbackButton();
+  let reportStub: sinon.SinonStub;
+
+  function makeExampleComment(): RobotCommentInfo {
+    return {
       id: '1234_abcd',
       robot_run_id: '2345',
       robot_id: 'Spacey/Mixed',
@@ -103,97 +96,99 @@ found in the LICENSE file.
       properties: {
         tricium_comment_uuid: 'abcd1234-abcd1234',
       },
-    });
+    };
+  }
 
-    const exampleResponse = Object.freeze({responseContent: 123});
+  function makeExampleResponse(): ReportNotUsefulResponse {
+    return {owner: 'foo'} as ReportNotUsefulResponse;
+  }
 
-    setup(() => {
-      element = fixture('tricium-feedback-button-fixture');
-      sandbox = sinon.sandbox.create();
-    });
-
-    teardown(() => {
-      sandbox.restore();
-    });
-
-    test('getProjectName gets project name from URL', async () => {
-      sandbox.stub(element, 'getCurrentUrl')
-             .returns('https://chromium-review.googlesource.com/c/chromium/src/+/1893975');
-      assert.equal(element.getProjectName(), 'chromium/src');
-    });
-
-    test('reportNotUseful delegates to client', async () => {
-      element.triciumClient = new TriciumV1Client();
-      sandbox.stub(element.triciumClient,
-                   'reportNotUseful', async (comment) => {
-        assert.equal(comment, exampleComment);
-        return exampleResponse;
-      });
-      element.comment = exampleComment;
-      element.disabled = false;
-      const response = await element.reportNotUseful();
-      assert.equal(response, exampleResponse);
-    });
-
-    test('reportNotUseful with success, button disabled', async () => {
-      element.triciumClient = new TriciumV1Client();
-      sandbox.stub(element.triciumClient,
-                   'reportNotUseful', async (comment) => {
-        return exampleResponse;
-      });
-      element.comment = exampleComment;
-      element.disabled = false;
-      const response = await element.reportNotUseful();
-      assert.equal(response, exampleResponse);
-      assert.equal(element.buttonText, 'Reported not useful');
-      assert.isTrue(element.disabled);
-    });
-
-    test('reportNotUseful with failure, button stays enabled', async () => {
-      sandbox.stub(TriciumV1Client.prototype,
-                   'reportNotUseful', async (comment) => {
-        throw Error('some error');
-      });
-      element.comment = exampleComment;
-      element.disabled = false;
-      let alertFired = false;
-      element.addEventListener('show-alert', (e) => {
-        assert.equal(e.detail.message, 'Failed to report not useful');
-        alertFired = true;
-      });
-      try {
-        await element.reportNotUseful();
-        assert.fail('got no exception', 'expected exception');
-      } catch (error) {
-        assert.isFalse(element.disabled);
-        assert.isTrue(alertFired);
-      }
-    });
-
-    test('constructBugLinkURL with no owner/component', () => {
-      element.comment = exampleComment;
-      element.triciumHost = 'tricium-dev.appspot.com';
-      assert.equal(
-        element.constructBugLinkURL({}),
-        ('https://bugs.chromium.org/p/chromium/issues/entry' +
-         '?summary=Issue+report+for+Spacey%2FMixed' +
-         '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
-         '&components=Infra%3EPlatform%3ETricium'));
-    });
-
-    test('constructBugLinkURL with owner/component', () => {
-      element.comment = exampleComment;
-      element.triciumHost = 'tricium-dev.appspot.com';
-      assert.equal(
-        element.constructBugLinkURL({
-          owner: 'someone@chromium.org',
-          monorailComponent: 'Some>Component',
-        }),
-        ('https://bugs.chromium.org/p/chromium/issues/entry' +
-         '?summary=Issue+report+for+Spacey%2FMixed' +
-         '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
-         '&components=Some%3EComponent' +
-         '&cc=someone%40chromium.org'));
-    });
+  setup(() => {
+    reportStub = sinon.stub(TriciumV1Client.prototype, 'reportNotUseful');
   });
-</script>
+
+  teardown(() => {
+    reportStub.restore();
+  });
+
+  test('getProjectName gets project name from URL', async () => {
+    sinon
+      .stub(element, 'getCurrentUrl')
+      .returns(
+        'https://chromium-review.googlesource.com/c/chromium/src/+/1893975'
+      );
+    assert.equal(element.getProjectName(), 'chromium/src');
+  });
+
+  test('reportNotUseful delegates to client', async () => {
+    element.triciumClient = new TriciumV1Client('host');
+    reportStub.callsFake(async comment => {
+      assert.deepEqual(comment, makeExampleComment());
+      return makeExampleResponse();
+    });
+    element.comment = makeExampleComment();
+    element.isDisabled = false;
+    const response = await element.reportNotUseful();
+    assert.deepEqual(response, makeExampleResponse());
+  });
+
+  test('reportNotUseful with success, button disabled', async () => {
+    element.triciumClient = new TriciumV1Client('host');
+    reportStub.callsFake(async _comment => makeExampleResponse());
+    element.comment = makeExampleComment();
+    element.isDisabled = false;
+    const response = await element.reportNotUseful();
+    assert.deepEqual(response, makeExampleResponse());
+    assert.equal(element.buttonText, 'Reported not useful');
+    assert.isTrue(element.isDisabled);
+  });
+
+  test('reportNotUseful with failure, button stays enabled', async () => {
+    reportStub.callsFake(_comment => {
+      throw Error('some error');
+    });
+    element.comment = makeExampleComment();
+    element.isDisabled = false;
+    let alertFired = false;
+    element.addEventListener('show-alert', e => {
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      assert.equal((e as any).detail.message, 'Failed to report not useful');
+      alertFired = true;
+    });
+    try {
+      await element.reportNotUseful();
+      assert.fail('got no exception', 'expected exception');
+    } catch (error) {
+      assert.isFalse(element.isDisabled);
+      assert.isTrue(alertFired);
+    }
+  });
+
+  test('constructBugLinkURL with no owner/component', () => {
+    element.comment = makeExampleComment();
+    element.triciumHost = 'tricium-dev.appspot.com';
+    assert.equal(
+      element.constructBugLinkURL({} as ReportNotUsefulResponse),
+      'https://bugs.chromium.org/p/chromium/issues/entry' +
+        '?summary=Issue+report+for+Spacey%2FMixed' +
+        '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
+        '&components=Infra%3EPlatform%3ETricium'
+    );
+  });
+
+  test('constructBugLinkURL with owner/component', () => {
+    element.comment = makeExampleComment();
+    element.triciumHost = 'tricium-dev.appspot.com';
+    assert.equal(
+      element.constructBugLinkURL({
+        owner: 'someone@chromium.org',
+        monorailComponent: 'Some>Component',
+      } as ReportNotUsefulResponse),
+      'https://bugs.chromium.org/p/chromium/issues/entry' +
+        '?summary=Issue+report+for+Spacey%2FMixed' +
+        '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
+        '&components=Some%3EComponent' +
+        '&cc=someone%40chromium.org'
+    );
+  });
+});

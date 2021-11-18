@@ -1,129 +1,109 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 import {getAccessToken} from './auth.js';
 
+export declare interface RobotCommentInfo {
+  id: string;
+  message?: string;
+  robot_id?: string;
+  robot_run_id?: string;
+  url?: string;
+  properties?: {
+    tricium_comment_uuid: string;
+  };
+  author?: {
+    name: string;
+    email: string;
+  };
+}
+
+declare interface TriciumRequest {
+  comment_id?: string;
+  gerritRevision?: {
+    host: string;
+    project: string;
+    change: string;
+    gitRef: string;
+  };
+}
+
+export declare interface ReportNotUsefulResponse extends Response {
+  owner?: string;
+  monorailComponent?: string;
+}
+
 /** Client for Tricium V1 API. */
 export class TriciumV1Client {
-  constructor(host) {
-    this.triciumHost = host;
-  }
+  triciumHost: string;
 
-  /**
-   * Make a Progress request to the Tricium server.
-   *
-   * For more about the request and response fields for the Progress
-   * method, see the Tricium proto definitions: https://goo.gl/rA5H1m
-   *
-   * The change and revision passed to this function come from the Gerrit
-   * REST API. API reference:
-   *   ChangeInfo: https://goo.gl/RgRGZV
-   *   RevisionInfo: https://goo.gl/BhtmGL
-   *
-   * @param {ChangeInfo} change The current CL.
-   * @param {RevisionInfo} revision The current patchset.
-   * @return {Promise} If there is a successful response from
-   *     Tricium, this resolves to a a ProgressResponse object.
-   *     If Tricium returns 404, this resolves with null; else
-   *     else it rejects with an error message.
-   */
-  async getProgress(change, revision) {
-    if (!this.triciumHost) {
-      throw Error('Cannot fetch Progress, Tricium host not set.');
-    }
-    const request = {
-      gerritRevision: {
-        host: this._normalizeGerritHost(window.location.host),
-        project: change.project,
-        change: change.id,
-        gitRef: revision.ref,
-      },
-    };
-    const response = await this._rpcRequest(
-        this.triciumHost, 'tricium.Tricium', 'Progress', request);
-    if (this._isOk(response)) {
-      return await this._parseRpcJson(response);
-    }
-    if (this._isNotFound(response)) {
-      return null;
-    }
-    throw await this._message(response);
+  constructor(host: string) {
+    this.triciumHost = host;
   }
 
   /**
    * Send a "not useful" Feedback message to the Tricium server.
    *
-   * @param {RobotCommentInfo} comment The comment to send feedback for.
-   * @return {Promise} Resolves if successful, or rejects with error.
+   * @param comment The comment to send feedback for.
+   * @return Resolves if successful, or rejects with error.
    */
-  async reportNotUseful(comment) {
+  async reportNotUseful(
+    comment: RobotCommentInfo
+  ): Promise<ReportNotUsefulResponse> {
     if (!this.triciumHost) {
       throw Error('Cannot send report, Tricium host not set.');
     }
-    if (!comment.properties || !comment.properties.tricium_comment_uuid) {
+    if (!comment.properties?.tricium_comment_uuid) {
       throw Error(
         'No tricium_comment_uuid field in comment.properties: ' +
-        JSON.stringify(comment.properties));
+          JSON.stringify(comment.properties)
+      );
     }
     const request = {
       comment_id: comment.properties.tricium_comment_uuid,
     };
-    const response = await this._rpcRequest(
-        this.triciumHost, 'tricium.Tricium', 'ReportNotUseful', request);
-    if (this._isOk(response)) {
-      return await this._parseRpcJson(response);
+    const response = await this.rpcRequest(
+      this.triciumHost,
+      'tricium.Tricium',
+      'ReportNotUseful',
+      request
+    );
+    if (this.isOk(response)) {
+      return (await this.parseRpcJson(response)) as ReportNotUsefulResponse;
     }
-    throw Error(await this._message(response));
-  }
-
-  /**
-   * Returns the prod version of a Gerrit host string.
-   *
-   * There are "canary", "polymer1", and "polymer2" Gerrit hosts which
-   * serve the same change data. Tricium needs the Gerrit host to fetch
-   * the run data, and Tricium always uses the prod host name.
-   *
-   * Note that there is expected to be at most once prefix, i.e.
-   * we don't need to handle "polymer2-canary-..." hosts.
-   *
-   * @param {string} host A value from window.location.host.
-   * @return {string} Gerrit host string to send to Tricium.
-   */
-  _normalizeGerritHost(host) {
-    return host.replace(/^canary-/, '').replace(/^polymer2-/, '').replace(
-      /^polymer1-/, '');
-  }
-
-  /** Checks if the response indicates that a run wasn't found. */
-  _isNotFound(response) {
-    return this._rpcCode(response) == 5 && response.status == 404;
+    throw Error(await this.message(response));
   }
 
   /** Checks if the response indicates an OK response. */
-  _isOk(response) {
-    return this._rpcCode(response) == 0 && response.status == 200;
+  private isOk(response: Response): boolean {
+    return this.rpcCode(response) === 0 && response.status === 200;
   }
 
-  /** @return {number} The RPC code from the response, NaN if absent. */
-  _rpcCode(response) {
-    return parseInt(response.headers.get('X-Prpc-Grpc-Code'), 10);
+  /** @return The RPC code from the response, NaN if absent. */
+  rpcCode(response: Response): number {
+    return parseInt(response.headers.get('X-Prpc-Grpc-Code') || '', 10);
   }
 
-  /** @return {Promise} Resolves to parsed object. */
-  async _parseRpcJson(response) {
-    const jsonPrefix = ')]}\'';
+  /** @return Promise resolving to parsed object. */
+  async parseRpcJson(response: Response): Promise<object> {
+    const jsonPrefix = ")]}'";
     const text = await response.text();
     return JSON.parse(text.substring(jsonPrefix.length));
   }
 
-  /** @return {Promise} Resolves to a description of an RPC response. */
-  async _message(response) {
-    const code = this._rpcCode(response);
+  /** @return Promise resolving to a description of an RPC response. */
+  async message(response: Response): Promise<string> {
+    const code = this.rpcCode(response);
     const text = await response.text();
-    return `X-Prpc-Grpc-Code: ${code}\n` +
-        `HTTP status: ${response.status}\n` +
-        `Body: ${text}`;
+    return (
+      `X-Prpc-Grpc-Code: ${code}\n` +
+      `HTTP status: ${response.status}\n` +
+      `Body: ${text}`
+    );
   }
 
   /**
@@ -138,23 +118,28 @@ export class TriciumV1Client {
    * bower and compiled together with vulcanize. It also has more
    * functionality than is required here.
    *
-   * @param {string} host The host to send requests to.
-   * @param {string} service Service name, including package name.
-   * @param {string} method The RPC method name.
-   * @param {Object} request Request message object.
-   * @return {Promise} Resolves to a fetch Response object.
+   * @param host The host to send requests to.
+   * @param service Service name, including package name.
+   * @param method The RPC method name.
+   * @param request Request message object.
+   * @return Promise resolving to a fetch Response object.
    */
-  async _rpcRequest(host, service, method, request) {
+  private async rpcRequest(
+    host: string,
+    service: string,
+    method: string,
+    request: TriciumRequest
+  ): Promise<Response> {
     const url = `https://${host}/prpc/${service}/${method}`;
     const headers = new Headers({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     });
     const accessToken = await this._getAccessToken();
     if (accessToken) {
       headers.set('Authorization', 'Bearer ' + accessToken);
     } else {
-      console.log(`Making request to ${url} with no bearer token.`);
+      console.info(`Making request to ${url} with no bearer token.`);
     }
     const opts = {
       headers,

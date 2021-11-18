@@ -1,192 +1,101 @@
-<!DOCTYPE html>
-<!--
-Copyright 2017 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
--->
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-<title>tricium-client.js test</title>
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
-<script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-<script src="../node_modules/web-component-tester/browser.js"></script>
+import './test/test-setup';
+import {TriciumV1Client, RobotCommentInfo} from './tricium-client';
+import {assertRejects} from './test/test-util';
 
-<script type="module">
-  import {TriciumV1Client} from '../src/main/resources/static/tricium-client.js';
-  import {assertRejects} from './test-util.js';
+suite('TriciumV1Client RPC request behavior', () => {
+  let client: TriciumV1Client;
+  let fetchStub: sinon.SinonStub;
 
-  suite('TriciumV1Client RPC request behavior', () => {
-    let client;
+  const comment: RobotCommentInfo = {
+    id: '8a0b9120_a01440e3',
+    robot_id: 'Hello',
+    robot_run_id: '123412341234',
+    properties: {
+      tricium_comment_uuid: 'f37e05e3-ce3b-475b-a4cd-2cc60814bc69',
+    },
+  };
 
-    const change = {
-      id: 'myProject~main~I3ea943139cb62e86071996f2480e58bf3eeb9dd2',
-      project: 'myProject',
-      branch: 'main',
-      subject: 'Implement Feature X',
-    };
-
-    const revision = {
-      kind: 'REWORK',
-      ref: 'refs/changes/99/4799/2',
-      subject: 'My Patchset',
-    };
-
-    const comment = {
-      id: '8a0b9120_a01440e3',
-      robot_id: 'Hello',
-      robot_run_id: 123412341234,
-      properties: {
-        tricium_comment_uuid: 'f37e05e3-ce3b-475b-a4cd-2cc60814bc69',
+  function newSuccessResponse(data: object): Response {
+    return new Response(")]}'" + JSON.stringify(data), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Prpc-Grpc-Code': '0',
       },
-    };
-
-    function newSuccessResponse(data) {
-      return new window.Response(')]}\'' + JSON.stringify(data), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Prpc-Grpc-Code': '0',
-        },
-      });
-    }
-
-    setup(() => {
-      client = new TriciumV1Client('tricium-mock.appspot.com');
-      client._getAccessToken = async () => 'accessToken';
-      sinon.stub(window, 'fetch');
     });
+  }
 
-    teardown(() => {
-      window.fetch.restore();
-    });
-
-    test('getProgress with a success response', async () => {
-      const responseData = {
-        runId: '56511',
-        state: 'SUCCESS',
-        functionProgress: [
-          {
-            name: 'GitFileIsolator',
-            state: 'SUCCESS',
-            swarmingUrl: 'https://swarm.example.com',
-            swarmingTaskId: '390a',
-          },
-          {
-            name: 'Spacey',
-            state: 'SUCCESS',
-            swarmingUrl: 'https://swarm.example.com',
-            swarmingTaskId: '390b',
-            numComments: 2,
-          },
-        ],
-      };
-      const response = newSuccessResponse(responseData);
-      window.fetch.returns(Promise.resolve(response));
-      const data = await client.getProgress(change, revision);
-      assert.deepEqual(data, responseData);
-    });
-
-    test('getProgress with invalid argument response', async () => {
-      const response = new window.Response('Invalid Argument', {
-        status: 400,
-        headers: {'X-Prpc-Grpc-Code': '3'},
-      });
-      window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          client.getProgress(change, revision),
-          'X-Prpc-Grpc-Code: 3\nHTTP status: 400\nBody: Invalid Argument');
-    });
-
-
-    test('getProgress with not found response', async () => {
-      // If no progress was found, we don't necessarily want
-      // to treat this as an error case because it may just
-      // not be finished yet.
-      const response = new window.Response('Not found', {
-        status: 404,
-        headers: {'X-Prpc-Grpc-Code': '5'},
-      });
-      window.fetch.returns(Promise.resolve(response));
-      const data = await client.getProgress(change, revision);
-      assert.isNull(data);
-    });
-
-    test('getProgress with invalid response', async () => {
-      const response = new window.Response('No pRPC code', {
-        status: 200,
-      });
-      window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          client.getProgress(change, revision),
-          'X-Prpc-Grpc-Code: NaN\nHTTP status: 200\nBody: No pRPC code');
-    });
-
-    test('reportNotUseful with valid comment', async () => {
-      const responseData = {responseField: 123};
-      const response = newSuccessResponse(responseData);
-      window.fetch.returns(Promise.resolve(response));
-      const data = await client.reportNotUseful(comment);
-      assert.deepEqual(data, responseData);
-    });
-
-    test('reportNotUseful with invalid empty comment', async () => {
-      const response = newSuccessResponse({responseField: 123});
-      window.fetch.returns(Promise.resolve(response));
-      assertRejects(
-          client.reportNotUseful({properties: {}}),
-          'No tricium_comment_uuid field in comment.properties: {}');
-    });
-
-    test('_message describes response contents', async () => {
-      const successResponse = newSuccessResponse({responseField: 123});
-      const message = await client._message(successResponse);
-      assert.equal(
-          message,
-          'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
-          'Body: )]}\'{"responseField":123}');
-    });
-
-    test('_parseRpcJson parses pRPC JSON', async () => {
-      const response = newSuccessResponse({mydata: 42});
-      const data = await client._parseRpcJson(response);
-      assert.deepEqual(data, {mydata: 42});
-    });
-
-    test('_parseRpcJson raises with invalid JSON', async () => {
-      const response = new window.Response('not valid JSON', {
-        status: 500,
-        headers: {'X-Prpc-Grpc-Code': '1'},
-      });
-      assertRejects(client._parseRpcJson(response));
-    });
-
-    test('_rpcCode with an error code present', () => {
-      const response = new window.Response('Invalid Argument', {
-        status: 400,
-        headers: {'X-Prpc-Grpc-Code': '3'},
-      });
-      assert.equal(client._rpcCode(response), 3);
-    });
-
-    test('_rpcCode with missing header', () => {
-      const response = new window.Response('Not pRPC', {
-        status: 200,
-      });
-      assert.isNaN(client._rpcCode(response));
-    });
-
-    test('_normalizeGerritHost strips prefixes', () => {
-      assert.equal(
-          client._normalizeGerritHost('canary-foo-review.googlesource.com'),
-          'foo-review.googlesource.com');
-      assert.equal(
-          client._normalizeGerritHost('polymer2-foo-review.googlesource.com'),
-          'foo-review.googlesource.com');
-      assert.equal(
-          client._normalizeGerritHost('polymer1-foo-review.googlesource.com'),
-          'foo-review.googlesource.com');
-      assert.equal(
-          client._normalizeGerritHost('foo-review.googlesource.com'),
-          'foo-review.googlesource.com');
-    });
+  setup(() => {
+    client = new TriciumV1Client('tricium-mock.appspot.com');
+    client._getAccessToken = async () => 'accessToken';
+    fetchStub = sinon.stub(window, 'fetch');
   });
-</script>
+
+  teardown(() => {
+    fetchStub.restore();
+  });
+
+  test('reportNotUseful with valid comment', async () => {
+    const responseData = {responseField: 123};
+    const response = newSuccessResponse(responseData);
+    fetchStub.returns(Promise.resolve(response));
+    const data = await client.reportNotUseful(comment);
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    assert.deepEqual(data, responseData as any);
+  });
+
+  test('reportNotUseful with invalid empty comment', async () => {
+    const response = newSuccessResponse({responseField: 123});
+    fetchStub.returns(Promise.resolve(response));
+    assertRejects(
+      client.reportNotUseful({properties: {}} as RobotCommentInfo),
+      'No tricium_comment_uuid field in comment.properties: {}'
+    );
+  });
+
+  test('message describes response contents', async () => {
+    const successResponse = newSuccessResponse({responseField: 123});
+    const message = await client.message(successResponse);
+    assert.equal(
+      message,
+      'X-Prpc-Grpc-Code: 0\nHTTP status: 200\n' +
+        'Body: )]}\'{"responseField":123}'
+    );
+  });
+
+  test('parseRpcJson parses pRPC JSON', async () => {
+    const response = newSuccessResponse({mydata: 42});
+    const data = await client.parseRpcJson(response);
+    assert.deepEqual(data, {mydata: 42});
+  });
+
+  test('parseRpcJson raises with invalid JSON', async () => {
+    const response = new Response('not valid JSON', {
+      status: 500,
+      headers: {'X-Prpc-Grpc-Code': '1'},
+    });
+    assertRejects(client.parseRpcJson(response));
+  });
+
+  test('rpcCode with an error code present', () => {
+    const response = new Response('Invalid Argument', {
+      status: 400,
+      headers: {'X-Prpc-Grpc-Code': '3'},
+    });
+    assert.equal(client.rpcCode(response), 3);
+  });
+
+  test('rpcCode with missing header', () => {
+    const response = new Response('Not pRPC', {
+      status: 200,
+    });
+    assert.isNaN(client.rpcCode(response));
+  });
+});

@@ -1,57 +1,82 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
-import {TriciumV1Client} from './tricium-client.js';
+import {PluginApi} from '@gerritcodereview/typescript-api/plugin';
+import {css, html, LitElement} from 'lit';
+import {customElement, property, state} from 'lit/decorators';
+import {
+  TriciumV1Client,
+  RobotCommentInfo,
+  ReportNotUsefulResponse,
+} from './tricium-client';
 
-class TriciumFeedbackButton extends Polymer.Element {
-  static get template() {
-    return Polymer.html`
-      <style>
-        #buglink {
-          color: var(--link-color);
-        }
-      </style>
-      <gr-button
-          class="action"
-          hidden$="[[hidden]]"
-          on-tap="reportNotUseful"
-          disabled$="[[disabled]]"
-          link>[[buttonText]]</gr-button>
-      <a id="buglink" href="[[bugLinkURL]]" target="_blank" hidden>File a Bug</a>`;
-  }
-  static get is() {
-    return 'tricium-feedback-button';
-  }
+declare interface TriciumConfig {
+  triciumHost: string;
+}
 
-  static get properties() {
-    return {
-      triciumHost: String,
-      triciumClient: Object,
-      plugin: Object,
-      comment: Object,
-      hidden: {
-        type: Boolean,
-        value: true,
-      },
-      disabled: {
-        type: Boolean,
-        value: true,
-      },
-      buttonText: {
-        type: String,
-        value: 'Not useful',
-      },
-      bugLinkURL: {
-        type: String,
-        value: ('https://bugs.chromium.org/p/chromium/issues/entry'+
-                '?components=Infra%3EPlatform%3ETricium'),
-      },
+@customElement('tricium-feedback-button')
+export class TriciumFeedbackButton extends LitElement {
+  @property()
+  triciumHost = '';
+
+  @property()
+  triciumClient: TriciumV1Client | null = null;
+
+  @property()
+  plugin!: PluginApi;
+
+  @property()
+  comment?: RobotCommentInfo;
+
+  @state()
+  isHidden = true;
+
+  @state()
+  isBugLinkHidden = true;
+
+  @state()
+  isDisabled = true;
+
+  @state()
+  buttonText = 'Not useful';
+
+  @property()
+  bugLinkURL =
+    'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium';
+
+  static override styles = css`
+    #buglink {
+      color: var(--link-color);
     }
+  `;
+
+  override render() {
+    return html`
+      <gr-button
+        class="action"
+        ?hidden="${this.isHidden}"
+        @click=${this.reportNotUseful}
+        ?disabled="${this.isDisabled}"
+        link
+        >${this.buttonText}</gr-button
+      >
+      <a
+        id="buglink"
+        href="${this.bugLinkURL}"
+        target="_blank"
+        ?hidden="${this.isBugLinkHidden}"
+      >
+        File a Bug
+      </a>
+    `;
   }
 
-    /** Upon attachment in the page, initialize the element. */
-  connectedCallback() {
+  /** Upon attachment in the page, initialize the element. */
+  override connectedCallback() {
     super.connectedCallback();
     if (!this.comment) {
       console.warn('tricium-feedback-button attached without comment');
@@ -63,8 +88,7 @@ class TriciumFeedbackButton extends Polymer.Element {
     // The email addresses for the tricium service accounts are
     // tricium-{dev,prod}@appspot.gserviceaccount.com.
     // If this is not a Tricium robot comment, don't show a button.
-    if (!this.comment || !this.comment.author || !this.comment.author.email
-        || !this.comment.author.email.startsWith('tricium-')) {
+    if (!this.comment.author?.email?.startsWith('tricium-')) {
       return;
     }
     this.init();
@@ -78,28 +102,33 @@ class TriciumFeedbackButton extends Polymer.Element {
       return;
     }
     const pluginName = this.plugin.getPluginName();
-    const config = await this.plugin.restApi().get(
+    const config: TriciumConfig = await this.plugin
+      .restApi()
+      .get(
         `/projects/${encodeURIComponent(project)}/` +
-        `${encodeURIComponent(pluginName)}~config`);
-    if (config && config.triciumHost) {
+          `${encodeURIComponent(pluginName)}~config`
+      );
+    if (config?.triciumHost) {
       this.triciumHost = config.triciumHost;
-      this.hidden = false;
-      this.disabled = false;
+      this.isHidden = false;
+      this.isDisabled = false;
       this.triciumClient = new TriciumV1Client(this.triciumHost);
     } else {
-      console.warn(`No config found for project "${project}", ` +
-          `plugin "${pluginName}", cannot report feedback.`);
+      console.warn(
+        `No config found for project "${project}", plugin "${pluginName}", ` +
+          'cannot report feedback.'
+      );
     }
     return Boolean(this.triciumHost);
   }
 
   /** Enables stubbing current URL in unit tests */
-  getCurrentUrl() {
+  getCurrentUrl(): string {
     return window.location.href;
   }
 
   /** Fetch the project name for the current change. */
-  getProjectName() {
+  getProjectName(): string {
     // We use a roundabout way of getting the project name because we don't
     // have access to the change object.
     // TODO(qyearsley): Find a better way to get the project name.
@@ -114,34 +143,37 @@ class TriciumFeedbackButton extends Polymer.Element {
   }
 
   /** Report to the tricium server that this comment was not useful. */
-  async reportNotUseful() {
-    if (this.disabled) {
+  async reportNotUseful(): Promise<ReportNotUsefulResponse> {
+    if (this.isDisabled) {
       console.warn('reportNotUseful called on disabled button');
       return Promise.reject(new Error('unexpected reportNotUseful call'));
     }
-    this.disabled = true;
+    this.isDisabled = true;
     try {
-      const response = await this.triciumClient.reportNotUseful(this.comment);
+      const response = await this.triciumClient!.reportNotUseful(this.comment!);
       this.bugLinkURL = this.constructBugLinkURL(response);
       this.buttonText = 'Reported not useful';
-      this.$.buglink.hidden = false;
+      this.isBugLinkHidden = false;
       return response;
     } catch (err) {
-      this.dispatchEvent(new CustomEvent('show-alert', {
-        detail: {message: 'Failed to report not useful'},
-        bubbles: true,
-      }));
-      this.disabled = false;
+      this.dispatchEvent(
+        new CustomEvent('show-alert', {
+          detail: {message: 'Failed to report not useful'},
+          bubbles: true,
+        })
+      );
+      this.isDisabled = false;
       return Promise.reject(new Error('failed reportNotUseful call'));
     }
   }
 
-  constructBugLinkURL(response) {
+  constructBugLinkURL(response: ReportNotUsefulResponse): string {
     const params = new URLSearchParams();
-    params.set('summary', `Issue report for ${this.comment.robot_id}`);
+    params.set('summary', `Issue report for ${this.comment!.robot_id}`);
     params.set(
-        'description',
-        `https://${this.triciumHost}/run/${this.comment.robot_run_id}`);
+      'description',
+      `https://${this.triciumHost}/run/${this.comment!.robot_run_id}`
+    );
     params.set('components', 'Infra>Platform>Tricium');
     if (response.monorailComponent) {
       params.set('components', response.monorailComponent);
@@ -153,5 +185,3 @@ class TriciumFeedbackButton extends Polymer.Element {
     return base + '?' + params.toString();
   }
 }
-
-customElements.define(TriciumFeedbackButton.is, TriciumFeedbackButton);

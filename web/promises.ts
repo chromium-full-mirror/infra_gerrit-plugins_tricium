@@ -1,29 +1,38 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-//
+/**
+ * @license
+ * Copyright 2021 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 // This was copied from the buildbucket plugin.
 // TODO(crbug.com/928553): Move this to a separate plugin.
 
 /** Implements Promise utility functions. */
 
-/** Returns a promise that rejects after the timeout.
+/**
+ * Returns a promise that rejects after the timeout.
  *
- * @param {number} timeoutMs Milliseconds before timeout.
- * @returns {Promise} promise that rejects after the timeout.
+ * @param timeoutMs Milliseconds before timeout.
+ * @returns promise that rejects after the timeout.
  */
-export function timeout(timeoutMs) {
-  return new Promise((resolve, reject) => {
+export function timeout(timeoutMs: number): Promise<Error> {
+  return new Promise((_, reject) => {
     setTimeout(() => reject(new Error('timeout')), timeoutMs);
   });
 }
 
-/** Decorates the promise with a rejection on timeout.
+/**
+ * Decorates the promise with a rejection on timeout.
  *
- * @param {Promise} promise to decorate.
- * @param {number} timeoutMs Milliseconds before timeout.
- * @returns {Promise} decorated promise that rejects on timeout.
+ * @param promise to decorate.
+ * @param timeoutMs Milliseconds before timeout.
+ * @returns decorated promise that rejects on timeout.
  */
-export function addTimeout(promise, timeoutMs) {
+export function addTimeout(
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
+  promise: Promise<any>,
+  timeoutMs: number
+): Promise<any> {
   return Promise.race([promise, timeout(timeoutMs)]);
 }
