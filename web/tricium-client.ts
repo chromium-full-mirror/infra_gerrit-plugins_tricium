@@ -92,7 +92,7 @@ export class TriciumV1Client {
   async parseRpcJson(response: Response): Promise<object> {
     const jsonPrefix = ")]}'";
     const text = await response.text();
-    return JSON.parse(text.substring(jsonPrefix.length));
+    return JSON.parse(text.substring(jsonPrefix.length)) as object;
   }
 
   /** @return Promise resolving to a description of an RPC response. */
