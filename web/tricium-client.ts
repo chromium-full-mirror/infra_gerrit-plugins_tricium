@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-import {getAccessToken} from './auth.js';
+import {AuthorizationHeader, getAuthorizationHeader} from './auth.js';
 
 export declare interface RobotCommentInfo {
   id: string;
@@ -43,6 +43,18 @@ export class TriciumV1Client {
 
   constructor(host: string) {
     this.triciumHost = host;
+  }
+
+  /**
+   * Parses URL and extracts changeId.
+   *
+   * @returns current CL changeId
+   */
+  getChangeId(location: string = window.location.href): string {
+    // The URL is of the form
+    //  <domain>/c/<project>/+/<changeId>/[<optional_file_path>]
+    // This returns the string after `+`.
+    return location.match(/\+\/(\d+)/)![1];
   }
 
   /**
@@ -131,16 +143,14 @@ export class TriciumV1Client {
     request: TriciumRequest
   ): Promise<Response> {
     const url = `https://${host}/prpc/${service}/${method}`;
+    const authHeader = await this.getAuthorizationHeader();
+
     const headers = new Headers({
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...authHeader,
     });
-    const accessToken = await this._getAccessToken();
-    if (accessToken) {
-      headers.set('Authorization', 'Bearer ' + accessToken);
-    } else {
-      console.info(`Making request to ${url} with no bearer token.`);
-    }
+
     const opts = {
       headers,
       method: 'POST',
@@ -149,8 +159,12 @@ export class TriciumV1Client {
     return await fetch(url, opts);
   }
 
-  /** Mockable equivalent of window.tricium.getAccessToken. */
-  _getAccessToken() {
-    return getAccessToken();
+  /**
+   * Mockable equivalent of window.buildbucket.getAuthorizationHeader.
+   *
+   * @returns authorization header to use in requests.
+   */
+   getAuthorizationHeader(): Promise<AuthorizationHeader> {
+    return getAuthorizationHeader(this.getChangeId());
   }
 }
