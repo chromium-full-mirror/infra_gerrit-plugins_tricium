@@ -34,7 +34,9 @@ suite('TriciumV1Client RPC request behavior', () => {
 
   setup(() => {
     client = new TriciumV1Client('tricium-mock.appspot.com');
-    client.getAuthorizationHeader = async () => ({'X-Gerrit-Auth': 'foo'});
+    client.getAuthorizationHeader = async () => {
+      return {'X-Gerrit-Auth': 'foo'};
+    };
     fetchStub = sinon.stub(window, 'fetch');
   });
 
@@ -100,7 +102,13 @@ suite('TriciumV1Client RPC request behavior', () => {
   });
 
   test('getChangeId returns changeId from URL', () => {
-    assert.equal(client.getChangeId('https://foo.bar/c/hello/world/+/12345'), '12345');
-    assert.equal(client.getChangeId('https://foo.bar/c/hello/world/+/54321/6/baz.ts'), '54321');
+    assert.equal(
+      client.getChangeId('https://foo.bar/c/hello/world/+/12345'),
+      '12345'
+    );
+    assert.equal(
+      client.getChangeId('https://foo.bar/c/hello/world/+/54321/6/baz.ts'),
+      '54321'
+    );
   });
 });

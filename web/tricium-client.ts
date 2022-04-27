@@ -164,7 +164,7 @@ export class TriciumV1Client {
    *
    * @returns authorization header to use in requests.
    */
-   getAuthorizationHeader(): Promise<AuthorizationHeader> {
+  getAuthorizationHeader(): Promise<AuthorizationHeader> {
     return getAuthorizationHeader(this.getChangeId());
   }
 }

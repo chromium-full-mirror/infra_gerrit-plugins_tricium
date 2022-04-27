@@ -3,9 +3,7 @@
 Tricium is a code analysis service for Chromium. The purpose of this plugin is
 to integrate with the Gerrit UI, e.g. by displaying progress of analyzers.
 
-## Development
-
-### Checking out the code
+## Checking out the code
 
 This plugin must be placed inside the Gerrit plugins directory. To check out
 the Tricium plugin code:
@@ -14,25 +12,28 @@ the Tricium plugin code:
     cd gerrit/plugins
     git clone https://chromium.googlesource.com/infra/gerrit-plugins/tricium
 
+## Development
+
+Run the commands below in web/.
+
 ### Running the tests
 
 For running unit tests execute:
 
-    bazel test --test_output=all //plugins/tricium/web:karma_test
+    make test
 
 For checking or fixing eslint formatter problems run:
 
-    bazel test //plugins/tricium/web:lint_test
-    bazel run //plugins/tricium/web:lint_bin -- --fix "$(pwd)/plugins/tricium/web"
+    make lint_test
+    make lint_fix
 
 #### Running with PolyGerrit UI and production data
 
 For testing the plugin with
 [Gerrit FE Dev Helper](https://gerrit.googlesource.com/gerrit-fe-dev-helper/)
-build the JavaScript bundle and copy it to the `plugins/tricium` folder:
+the command below builds the JavaScript bundle and copies it to the `plugins/tricium` folder:
 
-    bazel build //plugins/tricium/web:tricium
-    cp -f bazel-bin/plugins/tricium/web/tricium.js plugins/tricium
+    make build
 
 and let the Dev Helper redirect from `.+/plugins/tricium/static/tricium.js` to
 `http://localhost:8081/plugins_/plugins/tricium.js`.
