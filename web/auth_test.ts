@@ -14,7 +14,6 @@ import {
   resetAuthState,
   JWT_TOKEN_ID,
   JWT_TIMEOUT_MILLISECONDS,
-  GERRIT_JWT_FLAG,
   Token,
   OAuthConfig,
 } from './auth';
@@ -72,13 +71,6 @@ suite('auth', () => {
         };
       },
     } as unknown as PluginApi;
-
-    // Test with Mendel flag enabled
-    if (!window.ENABLED_EXPERIMENTS) {
-      window.ENABLED_EXPERIMENTS = [];
-    }
-
-    window.ENABLED_EXPERIMENTS.push(GERRIT_JWT_FLAG);
 
     authenticator = new Authenticator(
       {

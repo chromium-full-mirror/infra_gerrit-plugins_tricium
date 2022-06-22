@@ -23,9 +23,6 @@ let globalAuthenticatorPromise: Promise<Authenticator | null> | null = null;
 export const JWT_TIMEOUT_MILLISECONDS = 5 * 60 * 1000; // exported for tests only
 export const JWT_TOKEN_ID = 'https://api.cr.dev'; // exported for tests only
 
-// Gerrit JWT Mendel feature flag
-export const GERRIT_JWT_FLAG = 'UiFeature__gerrit_jwt_token_buildbucket_plugin'; // exported for tests only
-
 export declare interface OAuthConfig {
   auth_url?: string;
   proxy_url?: string;
@@ -172,26 +169,22 @@ export class Authenticator {
   ): Promise<Token> {
     let token: Token | null = null;
 
-    // Check whether Gerrit JWT feature is enabled
-    const experiments = window.ENABLED_EXPERIMENTS || [];
-    if (experiments.includes(GERRIT_JWT_FLAG)) {
-      // Call Gerrit API for Gerrit JWT token.
-      try {
-        const jwtResponse: any = await addTimeout(
-          this.plugin.restApi().get(`/changes/${changeId}/jwts`),
-          timeoutMs
-        );
+    // Call Gerrit API for Gerrit JWT token.
+    try {
+      const jwtResponse: any = await addTimeout(
+        this.plugin.restApi().get(`/changes/${changeId}/jwts`),
+        timeoutMs
+      );
 
-        if (jwtResponse.jwts[JWT_TOKEN_ID]) {
-          token = jwtResponse.jwts[JWT_TOKEN_ID] as Token;
-          token.expires_at = new Date().getTime() + JWT_TIMEOUT_MILLISECONDS;
-        }
-      } catch (e: unknown) {
-        console.warn(
-          'Unable to fetch the JWT token; defaulting to Google OAuth',
-          e
-        );
+      if (jwtResponse.jwts[JWT_TOKEN_ID]) {
+        token = jwtResponse.jwts[JWT_TOKEN_ID] as Token;
+        token.expires_at = new Date().getTime() + JWT_TIMEOUT_MILLISECONDS;
       }
+    } catch (e: unknown) {
+      console.warn(
+        'Unable to fetch the JWT token; defaulting to Google OAuth',
+        e
+      );
     }
 
     // token is only set when GERRIT_JWT_FLAG is set & Gerrit returns a token
