@@ -97,13 +97,11 @@ export async function getAuthorizationHeader(
  * For internal use only, use getAuthorizationHeader instead.
  */
 export class Authenticator {
-  private readonly token: {[key: string]: Token | null};
-
-  private currentFetchTokenPromise: Promise<Token> | null;
+  // Maps changeId to a promise that resolves to an access token.
+  private readonly tokenPromise: {[key: string]: Promise<Token> | null};
 
   constructor(public config: OAuthConfig, public plugin: PluginApi) {
-    this.token = {}; // Stores access token using changeId as key
-    this.currentFetchTokenPromise = null;
+    this.tokenPromise = {};
   }
 
   /**
@@ -114,21 +112,22 @@ export class Authenticator {
    * @returns auth token to use for requests.
    */
   async getToken(changeId: string): Promise<Token> {
-    if (!this.isValidToken(this.token[changeId])) {
-      this.token[changeId] = null;
+    const cachedPromise = this.tokenPromise[changeId];
+    if (cachedPromise) {
+      const res = await cachedPromise;
+      if (this.isValidToken(res)) {
+        return res;
+      }
     }
 
-    if (!this.token[changeId]) {
-      console.debug('bb: Awaiting fetchToken()');
-      this.token[changeId] = await this.fetchToken(changeId);
-      console.debug('bb: Resolved fetchToken()');
-    }
-
-    return this.token[changeId]!;
+    this.tokenPromise[changeId] = this.fetchToken(changeId);
+    console.debug('bb: Awaiting fetchToken()');
+    const res = await this.tokenPromise[changeId];
+    console.debug('bb: Resolved fetchToken()');
+    return res!;
   }
 
-  /**
-   * Fetches a new OAuth token using gapi.
+  /** Implements getToken.
    *
    * @param changeId changeId of the CL.
    * @param timeoutMs Milliseconds before timeout, can be specified in
@@ -139,33 +138,6 @@ export class Authenticator {
   private async fetchToken(
     changeId: string,
     timeoutMs = 10000
-  ): Promise<Token> {
-    if (this.currentFetchTokenPromise) {
-      return await this.currentFetchTokenPromise;
-    }
-
-    this.currentFetchTokenPromise = this.fetchTokenUnserialized(
-      changeId,
-      timeoutMs
-    );
-    try {
-      return await this.currentFetchTokenPromise;
-    } finally {
-      this.currentFetchTokenPromise = null;
-    }
-  }
-
-  /** Implements fetchToken.
-   *
-   * @param changeId changeId of the CL.
-   * @param timeoutMs Milliseconds before timeout, can be specified in
-   *     unit tests.
-   * @returns Resolves to a token object or null if the user
-   *     is not logged in. Rejects on an error or timeout.
-   */
-  private async fetchTokenUnserialized(
-    changeId: string,
-    timeoutMs: number
   ): Promise<Token> {
     let token: Token | null = null;
 
