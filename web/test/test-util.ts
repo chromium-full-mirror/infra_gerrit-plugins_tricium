@@ -5,6 +5,8 @@
  * found in the LICENSE file.
  */
 
+import {assert} from '@open-wc/testing';
+
 /**
  * Implements Promise utility functions.
  *

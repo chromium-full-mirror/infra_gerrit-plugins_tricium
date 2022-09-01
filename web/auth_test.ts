@@ -5,8 +5,8 @@
  * found in the LICENSE file.
  */
 
+import {assert} from '@open-wc/testing';
 import {assertRejects} from './test/test-util';
-import './test/test-setup';
 import {
   Authenticator,
   initAuth,
