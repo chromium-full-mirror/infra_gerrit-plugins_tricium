@@ -6,6 +6,7 @@
  */
 
 import {assert} from '@open-wc/testing';
+
 import {assertRejects} from './test/test-util';
 import {
   Authenticator,
@@ -15,20 +16,13 @@ import {
   JWT_TOKEN_ID,
   JWT_TIMEOUT_MILLISECONDS,
   Token,
-  OAuthConfig,
 } from './auth';
 import {PluginApi} from '@gerritcodereview/typescript-api/plugin';
-import {RestPluginApi} from '@gerritcodereview/typescript-api/rest';
-
-const platformJsElement = document.getElementById(
-  'platformJs'
-) as HTMLScriptElement;
 
 suite('auth', () => {
   let sandbox: sinon.SinonSandbox;
   let authenticator: Authenticator;
   let plugin: PluginApi;
-  let accessToken: Token;
   let jwtToken: Token;
   let jwtResponse: {jwts: any};
   let clock: sinon.SinonFakeTimers;
@@ -39,20 +33,10 @@ suite('auth', () => {
     clock = sinon.useFakeTimers({
       now: new Date().getTime(),
     });
-    accessToken = {
-      access_token: 'token',
-      expires_at: Date.now() + 60e3,
-    };
 
     jwtToken = {
       signed_jwt: 'abc',
       expires_at: new Date().getTime() + JWT_TIMEOUT_MILLISECONDS,
-    };
-
-    window.gapi = {
-      auth2: {
-        authorize: (_: any, resolve: any) => resolve(accessToken),
-      },
     };
 
     jwtResponse = {
@@ -72,13 +56,7 @@ suite('auth', () => {
       },
     } as unknown as PluginApi;
 
-    authenticator = new Authenticator(
-      {
-        client_id: 'client-id',
-        email: 'jane@example.com',
-      },
-      plugin
-    );
+    authenticator = new Authenticator(plugin);
   });
 
   teardown(() => {
@@ -91,51 +69,9 @@ suite('auth', () => {
     assert.deepEqual(actualToken, jwtToken);
   });
 
-  test('getToken falls back to access_token when JWT is not configured', async () => {
-    plugin.restApi = () =>
-      ({
-        get: () => {
-          throw new Error();
-        },
-      } as unknown as RestPluginApi);
-
-    const actualToken = await authenticator.getToken(changeId);
-    assert.deepEqual(actualToken, accessToken);
-
-    plugin.restApi = () =>
-      ({
-        get: () => jwtResponse,
-      } as unknown as RestPluginApi);
-  });
-
-  test('getToken falls back to access_token when there is no JWT', async () => {
-    jwtResponse.jwts = {};
-    const actualToken = await authenticator.getToken(changeId);
-    assert.deepEqual(actualToken, accessToken);
-  });
-
   test('getToken rejects if there is an error', async () => {
     jwtResponse.jwts[JWT_TOKEN_ID].error = 'bad';
     assertRejects(authenticator.getToken(changeId), 'bad');
-  });
-
-  test('getToken rejects when token has no expiry date', async () => {
-    jwtResponse.jwts = {};
-    accessToken.expires_at = null;
-    assertRejects(authenticator.getToken(changeId));
-  });
-
-  test('getToken rejects when token is expired', async () => {
-    jwtResponse.jwts = {};
-    accessToken.expires_at = 1543620640;
-    assertRejects(authenticator.getToken(changeId));
-  });
-
-  test('getToken rejects when authorize times out', async () => {
-    jwtResponse.jwts = {};
-    const forever = new Promise(() => {});
-    sandbox.stub(gapi.auth2, 'authorize').callsFake(forever as any);
-    assertRejects(authenticator.getToken(changeId), 'timeout');
   });
 
   test('getToken uses cached token', async () => {
@@ -162,43 +98,38 @@ suite('auth', () => {
 suite('initAuth', () => {
   let sandbox: sinon.SinonSandbox;
   let plugin: PluginApi;
-  let loggedIn: boolean;
-  let cfg: OAuthConfig;
-  const accessToken = 'token';
-
+  let jwtToken: Token;
+  let jwtResponse: {jwts: any};
   setup(() => {
     sandbox = sinon.createSandbox({
       useFakeTimers: {now: 1543620642},
     });
 
-    loggedIn = true;
-    cfg = {};
+    jwtToken = {
+      signed_jwt: 'abc',
+      expires_at: new Date().getTime() + JWT_TIMEOUT_MILLISECONDS,
+    };
+
+    jwtResponse = {
+      jwts: {
+        [JWT_TOKEN_ID]: {
+          signed_jwt: 'abc',
+        },
+      },
+    };
+
     plugin = {
       restApi: () => {
         return {
-          getLoggedIn: async () => loggedIn,
-          get: async _ => cfg,
+          get: () => jwtResponse,
+          getLoggedIn: () => true,
         };
       },
-    } as PluginApi;
+    } as unknown as PluginApi;
 
-    window.gapi = {
-      auth2: {
-        init: (resolve: any) => resolve(),
-      },
-      config: {
-        get: () => null,
-        update: () => {},
-      },
-      load: (_: any, resolve: any) => resolve(),
-    };
-
-    sandbox.stub(Authenticator.prototype, 'getToken').callsFake(async () => {
-      return {
-        access_token: accessToken,
-        expires_at: 0,
-      };
-    });
+    sandbox
+      .stub(Authenticator.prototype, 'getToken')
+      .callsFake(async () => jwtToken);
   });
 
   teardown(() => {
@@ -207,47 +138,19 @@ suite('initAuth', () => {
   });
 
   test('initAuth sets access token which can then be gotten', async () => {
-    initAuth(plugin, platformJsElement);
+    initAuth(plugin);
     const actualAuthHeader = await getAuthorizationHeader('123456');
     assert.deepEqual(actualAuthHeader, {
-      authorization: `Bearer ${accessToken}`,
+      'X-Gerrit-Auth': jwtToken.signed_jwt,
     });
   });
 
   test('initAuth throws if called twice', async () => {
-    initAuth(plugin, platformJsElement);
-    assert.throws(
-      () => initAuth(plugin, platformJsElement),
-      'initAuth is called more than once'
-    );
+    initAuth(plugin);
+    assert.throws(() => initAuth(plugin), 'initAuth is called more than once');
   });
 
   test('getAuthorizationHeader rejects if called before init', async () => {
     assertRejects(getAuthorizationHeader('123456'), 'initAuth was not called');
-  });
-
-  test('initAuth sets up gapi', async () => {
-    sandbox.spy(gapi.config, 'update');
-    sandbox.spy(gapi, 'load');
-    cfg = {
-      auth_url: 'https://example.com/auth',
-      proxy_url: 'https://example.com/proxy',
-    };
-    initAuth(plugin, platformJsElement);
-    await getAuthorizationHeader('123456');
-
-    assert.isTrue(
-      gapi.config.update.calledWith('oauth-flow/authUrl', cfg.auth_url)
-    );
-    assert.isTrue(
-      gapi.config.update.calledWith('oauth-flow/proxyUrl', cfg.proxy_url)
-    );
-
-    // `auth` must be loaded after config is updated.
-    assert.isTrue(
-      gapi.load
-        .withArgs('auth2', sinon.match.any)
-        .calledAfter(gapi.config.update)
-    );
   });
 });
