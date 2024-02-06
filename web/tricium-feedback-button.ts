@@ -45,8 +45,7 @@ export class TriciumFeedbackButton extends LitElement {
   buttonText = 'Not useful';
 
   @property()
-  bugLinkURL =
-    'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3ETricium';
+  bugLinkURL = 'https://issues.chromium.org/issues/new?component=1456522';
 
   static override styles = css`
     #buglink {
@@ -169,17 +168,23 @@ export class TriciumFeedbackButton extends LitElement {
 
   constructBugLinkURL(response: ReportNotUsefulResponse): string {
     const params = new URLSearchParams();
-    params.set('summary', `Issue report for ${this.comment!.robot_id}`);
     params.set(
       'description',
       `https://${this.triciumHost}/run/${this.comment!.robot_run_id}`
     );
-    params.set('components', 'Infra>Platform>Tricium');
-    if (response.monorailComponent) {
-      params.set('components', response.monorailComponent);
-    }
     if (response.owner) {
       params.set('cc', response.owner);
+    }
+    const title = `Issue report for ${this.comment!.robot_id}`;
+    if (response.issueTrackerComponentId) {
+      params.set('component', response.issueTrackerComponentId);
+      params.set('title', title);
+      return `https://issues.chromium.org/issues/new?${params.toString()}`
+    }
+
+    params.set('summary', title);
+    if (response.monorailComponent) {
+      params.set('components', response.monorailComponent);
     }
     const base = 'https://bugs.chromium.org/p/chromium/issues/entry';
     return base + '?' + params.toString();

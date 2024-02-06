@@ -35,6 +35,7 @@ declare interface TriciumRequest {
 export declare interface ReportNotUsefulResponse extends Response {
   owner?: string;
   monorailComponent?: string;
+  issueTrackerComponentId?: string;
 }
 
 /** Client for Tricium V1 API. */

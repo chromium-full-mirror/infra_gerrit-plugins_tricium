@@ -103,6 +103,21 @@ suite('<tricium-feedback-button> report behavior', () => {
     return {owner: 'foo'} as ReportNotUsefulResponse;
   }
 
+  /**
+   * Asserts that the URLs are roughly equal, i.e. same origin, path and same
+   * set of search params.
+   *
+   * @param urlA URL to be compared.
+   * @param urlB URL to be compared.
+   */
+  function assertURLsEqual(urlA: string, urlB: string) {
+    const aParams = new URL(urlA);
+    const bParams = new URL(urlB);
+    assert.equal(aParams.origin, bParams.origin);
+    assert.equal(aParams.pathname, bParams.pathname);
+    assert.deepEqual(aParams.searchParams, bParams.searchParams);
+  }
+
   setup(() => {
     reportStub = sinon.stub(TriciumV1Client.prototype, 'reportNotUseful');
   });
@@ -167,19 +182,18 @@ suite('<tricium-feedback-button> report behavior', () => {
   test('constructBugLinkURL with no owner/component', () => {
     element.comment = makeExampleComment();
     element.triciumHost = 'tricium-dev.appspot.com';
-    assert.equal(
+    assertURLsEqual(
       element.constructBugLinkURL({} as ReportNotUsefulResponse),
       'https://bugs.chromium.org/p/chromium/issues/entry' +
         '?summary=Issue+report+for+Spacey%2FMixed' +
-        '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
-        '&components=Infra%3EPlatform%3ETricium'
+        '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345'
     );
   });
 
   test('constructBugLinkURL with owner/component', () => {
     element.comment = makeExampleComment();
     element.triciumHost = 'tricium-dev.appspot.com';
-    assert.equal(
+    assertURLsEqual(
       element.constructBugLinkURL({
         owner: 'someone@chromium.org',
         monorailComponent: 'Some>Component',
@@ -188,6 +202,23 @@ suite('<tricium-feedback-button> report behavior', () => {
         '?summary=Issue+report+for+Spacey%2FMixed' +
         '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
         '&components=Some%3EComponent' +
+        '&cc=someone%40chromium.org'
+    );
+  });
+
+  test('constructBugLinkURL with issue tracker component id', () => {
+    element.comment = makeExampleComment();
+    element.triciumHost = 'tricium-dev.appspot.com';
+    assertURLsEqual(
+      element.constructBugLinkURL({
+        owner: 'someone@chromium.org',
+        monorailComponent: 'Old>Component',
+        issueTrackerComponentId: '1234',
+      } as ReportNotUsefulResponse),
+      'https://issues.chromium.org/issues/new?' +
+        'title=Issue+report+for+Spacey%2FMixed' +
+        '&description=https%3A%2F%2Ftricium-dev.appspot.com%2Frun%2F2345' +
+        '&component=1234' +
         '&cc=someone%40chromium.org'
     );
   });
