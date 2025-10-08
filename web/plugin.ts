@@ -10,7 +10,7 @@ import '@gerritcodereview/typescript-api/gerrit';
 import {initAuth} from './auth';
 import './tricium-feedback-button';
 
-window.Gerrit.install(async plugin => {
+window.Gerrit?.install(async plugin => {
   initAuth(plugin);
   plugin.registerCustomComponent(
     'robot-comment-controls',

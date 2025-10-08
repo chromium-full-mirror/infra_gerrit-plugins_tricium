@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+import './test/test-setup';
 import {assert} from '@open-wc/testing';
 
 import {assertRejects} from './test/test-util';

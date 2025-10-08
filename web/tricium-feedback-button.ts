@@ -7,7 +7,7 @@
 
 import {PluginApi} from '@gerritcodereview/typescript-api/plugin';
 import {css, html, LitElement} from 'lit';
-import {customElement, property, state} from 'lit/decorators';
+import {customElement, property, state} from 'lit/decorators.js';
 import {
   TriciumV1Client,
   RobotCommentInfo,

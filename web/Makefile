@@ -5,7 +5,7 @@
 .PHONY: test
 
 test:
-	bazel test --test_output=all //plugins/tricium/web:karma_test
+	bazel test --test_output=all //plugins/tricium/web:web_test_runner
 
 lint_test:
 	bazel test //plugins/tricium/web:lint_test

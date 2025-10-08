@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+import './test/test-setup';
 import {assert} from '@open-wc/testing';
 import {TriciumV1Client, RobotCommentInfo} from './tricium-client';
 import {assertRejects} from './test/test-util';
